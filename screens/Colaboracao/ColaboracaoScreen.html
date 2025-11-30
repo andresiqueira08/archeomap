@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="css/mobile.css">
 </head>
 <body>
+    <!-- Tela Principal -->
     <div class="screen main-screen active">
         <div class="page">
             <div class="top-bar">
@@ -58,7 +59,8 @@
                     </div>
                 </div>
                 <div class="artifacts-grid" id="artifactsGrid">
-                    </div>
+                    <!-- Os artefatos serão carregados dinamicamente aqui -->
+                </div>
             </div>
             
             <div class="secondary" id="btnAddMap">
@@ -80,6 +82,7 @@
                 </div>
             </div>
             
+            <!-- Modal para adicionar mapa -->
             <div class="modal" id="mapModal">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -97,13 +100,16 @@
                 </div>
             </div>
             
+            <!-- Inputs ocultos para arquivos -->
             <input type="file" id="fileInput" accept="image/*" style="display: none;">
             <input type="file" id="imageInput" accept="image/*" style="display: none;">
             
+            <!-- Notificação -->
             <div class="notification" id="notification"></div>
         </div>
     </div>
 
+    <!-- Tela do Mapa Detalhado -->
     <div class="screen map-detail-screen">
         <div class="map-detail-header">
             <button class="back-button" id="backButton">← Voltar</button>
@@ -133,6 +139,7 @@
         </div>
     </div>
 
+    <!-- Modal de detalhes do ponto -->
     <div class="modal point-details-modal" id="pointDetailsModal">
         <div class="modal-content">
             <div class="modal-header">
