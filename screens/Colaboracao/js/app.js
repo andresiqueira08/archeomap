@@ -76,13 +76,10 @@ document.addEventListener('DOMContentLoaded', () => {
     iniciarOuvintesFirebase();
 });
 
-// Configura interface baseada no tipo de usuário
 function aplicarPermissoesDeUsuario() {
     if (isArqueologo) {
-        // Mostra botão de trocar imagem
         if (btnChangeImage) btnChangeImage.style.display = 'flex';
     } else {
-        // Esconde ferramentas de edição para Público
         if (btnAddZeroPoint) btnAddZeroPoint.style.display = 'none';
         if (btnAddCommonPoint) btnAddCommonPoint.style.display = 'none';
         if (addingModeIndicator) addingModeIndicator.remove();
@@ -100,12 +97,10 @@ function showNotification(message, type = 'success') {
 // --- FIREBASE: CARREGAR E ATUALIZAR ---
 
 function carregarMapaFirebase() {
-    // Carrega dados iniciais do mapa (Imagem, nome, etc)
     const mapRef = database.ref('maps/' + currentMapId);
     mapRef.on('value', (snapshot) => {
         const data = snapshot.val();
         if (data && data.image) {
-            // Se a imagem mudar no servidor, atualiza aqui em tempo real
             if (currentMapImage !== data.image) {
                 currentMapImage = data.image;
                 loadMapVisuals(currentMapImage);
@@ -130,7 +125,7 @@ function iniciarOuvintesFirebase() {
     });
 }
 
-// --- TROCA DE IMAGEM (NOVO) ---
+// --- TROCA DE IMAGEM ---
 
 if (btnChangeImage) {
     btnChangeImage.addEventListener('click', () => {
@@ -142,28 +137,22 @@ if (mapImageInput) {
     mapImageInput.addEventListener('change', (event) => {
         const file = event.target.files[0];
         if (file && file.type.startsWith('image/')) {
+            showNotification("Enviando nova imagem...");
             
-            // Validação de tamanho simples
-            if (file.size > 2 * 1024 * 1024) {
-                showNotification("Imagem muito grande! Máximo 2MB.", "error");
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const novaImagemBase64 = e.target.result;
-                
-                // Atualiza no Firebase
-                database.ref('maps/' + currentMapId).update({ image: novaImagemBase64 })
-                    .then(() => {
-                        showNotification("Imagem do mapa atualizada!");
-                        loadMapVisuals(novaImagemBase64); // Atualiza localmente já
-                    })
-                    .catch(err => showNotification("Erro ao atualizar: " + err.message, "error"));
-            };
-            reader.readAsDataURL(file);
+            const fileName = `maps/${currentMapId}_updated_${Date.now()}`;
+            const ref = storage.ref(fileName);
+            
+            ref.put(file).then((snapshot) => {
+                return snapshot.ref.getDownloadURL();
+            }).then((downloadURL) => {
+                return database.ref('maps/' + currentMapId).update({ image: downloadURL });
+            }).then(() => {
+                showNotification("Imagem atualizada com sucesso!");
+            }).catch((err) => {
+                showNotification("Erro ao enviar: " + err.message, "error");
+            });
         }
-        event.target.value = ''; // Limpa input
+        event.target.value = '';
     });
 }
 
@@ -179,7 +168,6 @@ function loadMapVisuals(imageSrc) {
     interactiveMap.style.display = 'block';
     isMapLoaded = true;
     
-    // Se o canvas estiver aberto, redesenha
     if (mapDetailScreen.classList.contains('active')) {
         drawDetailedMap();
     }
@@ -347,6 +335,7 @@ detailedMapCanvas.addEventListener('click', (event) => {
             salvarPontoNoFirebase(relX, relY, 'zero', { altitude: altura, name: 'Ponto Zero' });
         }
     } else {
+        // CORREÇÃO AQUI: Salva como 'common' e prepara para abrir modal
         salvarPontoNoFirebase(relX, relY, 'common', { 
             name: `Achado #${mapPoints.length + 1}`,
             state: 'identificado'
@@ -356,6 +345,7 @@ detailedMapCanvas.addEventListener('click', (event) => {
     deactivateAddingMode();
 });
 
+// FUNÇÃO ATUALIZADA: Abre o modal se for ponto comum
 function salvarPontoNoFirebase(x, y, type, extraDetails) {
     if (!isArqueologo) return;
 
@@ -374,8 +364,23 @@ function salvarPontoNoFirebase(x, y, type, extraDetails) {
         createdBy: localUser ? localUser.email : 'anon'
     };
     
-    database.ref(`maps/${currentMapId}/pointsData`).push(novoPonto)
-        .then(() => showNotification("Ponto salvo na nuvem!"))
+    // Captura a referência para pegar o ID imediatamente
+    const pointsRef = database.ref(`maps/${currentMapId}/pointsData`);
+    const novoRef = pointsRef.push(); // Gera a chave (ID)
+    
+    novoRef.set(novoPonto)
+        .then(() => {
+            showNotification("Ponto criado!");
+            
+            // SE FOR PONTO COMUM, ABRE O MODAL PARA EDIÇÃO IMEDIATA
+            if (type === 'common') {
+                const pontoParaEdicao = {
+                    id: novoRef.key, // Usa o ID que acabamos de gerar
+                    ...novoPonto
+                };
+                abrirModalEdicao(pontoParaEdicao);
+            }
+        })
         .catch(err => alert("Erro ao salvar: " + err.message));
 }
 
