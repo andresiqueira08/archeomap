@@ -7,21 +7,19 @@
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/mobile.css">
 
-<style>
-  /* Override: Ajuste para canto inferior direito e tamanho compacto */
-  #btnAddMap {
-    position: fixed !important;
-    bottom: 84px !important; /* Acima do bottom-nav */
-    right: 16px !important; /* Alinhado à direita */
-    left: auto !important; /* Desabilita alinhamento à esquerda/centralização */
-    top: auto !important; /* Desabilita posição absoluta no meio da tela */
-    transform: none !important; /* Remove centralização */
-    z-index: 1200 !important;
-    width: auto !important;
-    padding: 12px 18px !important;
-    border-radius: 10px !important;
-  }
-</style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+      #btnAddMap {
+        position: fixed !important; bottom: 84px !important; right: 16px !important;
+        left: auto !important; top: auto !important; transform: none !important;
+        z-index: 1200 !important; width: auto !important; padding: 12px 18px !important;
+        border-radius: 10px !important;
+      }
+      .loading-spinner { text-align: center; padding: 20px; color: #666; }
+    </style>
 </head>
 <body>
     <div class="screen galeria-screen active">
@@ -29,42 +27,37 @@
             <div class="top-bar">
                 <div class="top"></div>
                 <div class="content">
-                    <div class="title">Meus Mapas</div>
-                    <div class="icon-buttons">
-                        <div class="icon" id="btnProfile">👤</div>
-                    </div>
+                    <div class="title">Mapas na Nuvem</div>
+                    <div class="icon-buttons"><div class="icon" id="btnProfile">👤</div></div>
                 </div>
             </div>
             
             <div class="list">
                 <div class="section-title">
                     <div class="text">
-                        <div class="title3">Mapas Criados</div>
-                        <div class="subtitle">Gerencie seus projetos arqueológicos</div>
+                        <div class="title3">Projetos Ativos</div>
+                        <div class="subtitle">Sincronizados em tempo real</div>
                     </div>
                 </div>
                 
-                <div class="galeria-grid" id="galeriaGrid">
-                    </div>
+                <div id="loading" class="loading-spinner">Carregando mapas...</div>
+                <div class="galeria-grid" id="galeriaGrid"></div>
                 
                 <div class="empty-state" id="emptyState" style="display: none;">
                     <div class="empty-icon">🗺️</div>
-                    <h3>Nenhum mapa criado</h3>
-                    <p>Comece criando seu primeiro mapa de escavação</p>
+                    <h3>Nenhum mapa encontrado</h3>
+                    <p>Crie um novo mapa para começar a colaborar.</p>
                 </div>
             </div>
             
-            <div class="secondary" id="btnAddMap">
-                <div class="title10">+ Novo Trabalho</div> </div>
+            <div class="secondary" id="btnAddMap"><div class="title10">+ Novo Trabalho</div></div>
             
             <div class="bottom-nav">
                 <div class="tab active" id="tabGaleria">
-                    <div class="icon2">🏠</div>
-                    <div class="title9">Galeria</div>
+                    <div class="icon2">🏠</div><div class="title9">Galeria</div>
                 </div>
                 <div class="tab" id="tabPerfil">
-                    <div class="icon2">👤</div>
-                    <div class="title9">Perfil</div>
+                    <div class="icon2">👤</div><div class="title9">Perfil</div>
                 </div>
             </div>
             
@@ -75,343 +68,158 @@
                         <button class="close-modal" id="closeMapModal">&times;</button>
                     </div>
                     <div class="modal-options">
-                        <div class="modal-option" id="optionGallery">
-                            <span>📷</span> Abrir galeria
-                        </div>
-                        <div class="modal-option" id="optionFiles">
-                            <span>📁</span> Abrir arquivos
-                        </div>
+                        <div class="modal-option" id="optionGallery"><span>📷</span> Abrir galeria</div>
+                        <div class="modal-option" id="optionFiles"><span>📁</span> Abrir arquivos</div>
                     </div>
                 </div>
             </div>
-            
             <input type="file" id="fileInput" accept="image/*" style="display: none;">
             <input type="file" id="imageInput" accept="image/*" style="display: none;">
-            
             <div class="notification" id="notification"></div>
         </div>
     </div>
 
+    <script src="../../js/firebase-config.js"></script>
+
     <script>
-        // Elementos
+        // Elementos UI
         const galeriaGrid = document.getElementById('galeriaGrid');
         const emptyState = document.getElementById('emptyState');
+        const loadingDiv = document.getElementById('loading');
         const btnAddMap = document.getElementById('btnAddMap');
         const mapModal = document.getElementById('mapModal');
         const closeMapModal = document.getElementById('closeMapModal');
         const fileInput = document.getElementById('fileInput');
         const imageInput = document.getElementById('imageInput');
-        const optionGallery = document.getElementById('optionGallery');
-        const optionFiles = document.getElementById('optionFiles');
         const notification = document.getElementById('notification');
-        const tabs = document.querySelectorAll('.tab');
-        const btnProfile = document.getElementById('btnProfile');
+        
+        let currentUser = null;
 
-        // Estado
-        let userMaps = [];
-
-        // Função para mostrar notificação (Omitida para brevidade...)
-        function showNotification(message, type = 'success') {
-            notification.textContent = message;
-            notification.style.display = 'block';
-            notification.style.background = type === 'success' ? 'var(--primary-color)' : 'var(--error-color)';
-            
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, 3000);
-        }
-
-        // Carregar mapas do usuário (Omitida para brevidade...)
-        function loadUserMaps() {
-            const savedMaps = localStorage.getItem('userMaps');
-            if (savedMaps) {
-                userMaps = JSON.parse(savedMaps);
+        // Verifica autenticação
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                loadMapsFromFirebase();
+            } else {
+                window.location.href = '../Login/LoginScreen.html';
             }
-            renderGaleria();
-        }
+        });
 
-        // Renderizar galeria (Omitida para brevidade...)
-        function renderGaleria() {
-            galeriaGrid.innerHTML = '';
-            
-            if (userMaps.length === 0) {
-                emptyState.style.display = 'block';
-                return;
-            }
-            
-            emptyState.style.display = 'none';
-            
-            userMaps.forEach((map, index) => {
-                const mapCard = document.createElement('div');
-                mapCard.className = 'map-card';
-                mapCard.setAttribute('data-id', map.id);
+        // --- FUNÇÕES DE BANCO DE DADOS (FIREBASE) ---
+
+        function loadMapsFromFirebase() {
+            // Escuta em tempo real a pasta 'maps' do banco de dados
+            database.ref('maps').on('value', (snapshot) => {
+                loadingDiv.style.display = 'none';
+                galeriaGrid.innerHTML = '';
+                const mapsData = snapshot.val();
+
+                if (!mapsData) {
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                emptyState.style.display = 'none';
+                // Transforma objeto em array
+                const mapsList = Object.keys(mapsData).map(key => ({
+                    id: key,
+                    ...mapsData[key]
+                }));
                 
-                mapCard.innerHTML = `
-                    <div class="map-card-image">
-                        <img src="${map.image}" alt="${map.name}">
-                        <div class="map-card-overlay">
-                            <div class="map-stats">
-                                <span>${map.points || 0} pontos</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="map-card-info">
-                        <h4 class="map-card-title">${map.name}</h4>
-                        <p class="map-card-date">Criado em ${map.createdDate}</p>
-                    </div>
-                `;
-                
-                mapCard.addEventListener('click', () => {
-                    openMapDetails(map.id);
-                });
-                
-                galeriaGrid.appendChild(mapCard);
+                // Ordena por data (mais recente primeiro)
+                mapsList.reverse().forEach(renderMapCard);
             });
         }
 
-        // Abrir detalhes do mapa (CHAVE: Salva o mapa completo e redireciona)
-        function openMapDetails(mapId) {
-            // Salva o mapa completo no localStorage para que a tela de colaboração o carregue
-            const map = userMaps.find(m => m.id === mapId);
-            if (map) {
+        function renderMapCard(map) {
+            const mapCard = document.createElement('div');
+            mapCard.className = 'map-card';
+            mapCard.innerHTML = `
+                <div class="map-card-image">
+                    <img src="${map.image}" alt="${map.name}">
+                    <div class="map-card-overlay">
+                        <div class="map-stats"><span>${map.pointsCount || 0} pontos</span></div>
+                    </div>
+                </div>
+                <div class="map-card-info">
+                    <h4 class="map-card-title">${map.name}</h4>
+                    <p class="map-card-date">Criado por: ${map.authorName || 'Desconhecido'}</p>
+                </div>
+            `;
+            mapCard.addEventListener('click', () => {
+                // Salva ID no localStorage para a tela de colaboração saber qual carregar
+                localStorage.setItem('currentMapId', map.id);
+                // Também salva o objeto completo para carregamento rápido
                 localStorage.setItem('currentMap', JSON.stringify(map));
-                window.location.href = '../../screens/Colaboracao/ColaboracaoScreen.html'; // Redireciona para a tela de Colaboração
-            }
+                window.location.href = '../../screens/Colaboracao/ColaboracaoScreen.html';
+            });
+            galeriaGrid.appendChild(mapCard);
         }
 
-        // Adicionar novo mapa (FUNÇÃO DE SUPORTE)
         function addNewMap(imageSrc) {
-            const newMap = {
-                id: Date.now(),
-                name: `Mapa ${userMaps.length + 1}`,
-                image: imageSrc,
-                createdDate: new Date().toLocaleDateString('pt-BR'),
-                points: 0,
-                pointsData: [] // Garante que a estrutura de dados de pontos seja salva
-            };
-            
-            // 1. Adiciona o novo mapa à lista principal
-            userMaps.unshift(newMap);
-            
-            // 2. Salva a lista completa (para que a galeria funcione ao voltar)
-            localStorage.setItem('userMaps', JSON.stringify(userMaps));
-            
-            // 3. Salva o novo mapa como o mapa atual para a tela de colaboração
-            localStorage.setItem('currentMap', JSON.stringify(newMap)); 
+            if (!currentUser) return;
 
-            showNotification('Novo mapa criado. Redirecionando para edição...');
-            
-            // 4. Redireciona imediatamente para a tela de colaboração
-            window.location.href = '../../screens/Colaboracao/ColaboracaoScreen.html'; 
+            const newMapKey = database.ref().child('maps').push().key;
+            const newMap = {
+                id: newMapKey,
+                name: `Mapa ${new Date().toLocaleDateString('pt-BR')}`,
+                image: imageSrc,
+                createdDate: new Date().toISOString(),
+                authorId: currentUser.uid,
+                authorName: JSON.parse(localStorage.getItem('user'))?.name || 'Arqueólogo',
+                pointsCount: 0,
+                pointsData: []
+            };
+
+            // Salva no Firebase
+            database.ref('maps/' + newMapKey).set(newMap)
+                .then(() => {
+                    showNotification('Mapa enviado para a nuvem!');
+                    mapModal.style.display = 'none';
+                })
+                .catch(err => showNotification('Erro ao salvar: ' + err.message, 'error'));
         }
 
-        // Processar imagem selecionada
+        // --- HANDLERS DE UI ---
+
         function handleImageSelection(event) {
             const file = event.target.files[0];
-            
             if (file && file.type.startsWith('image/')) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = (e) => {
+                    // Otimização: Imagens muito grandes travam o Realtime Database
+                    // Idealmente usaríamos Firebase Storage, mas para manter simples usaremos Base64
+                    // com um aviso se for muito grande.
                     addNewMap(e.target.result);
-                    mapModal.style.display = 'none';
                 };
                 reader.readAsDataURL(file);
-            } else if (file) {
-                showNotification('Por favor, selecione uma imagem válida.', 'error');
             }
-            
             event.target.value = '';
         }
 
-        // Abrir galeria
-        function openImageGallery() {
-            if (/Android|webOS|iPhone|iPad|Ipod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-                imageInput.setAttribute('capture', 'environment');
-            }
-            imageInput.click();
-        }
-
-        // Abrir arquivos
-        function openFileSelector() {
-            fileInput.click();
-        }
-
-        // Navegação por abas (Omitida para brevidade...)
-        function setActiveTab(tabElement) {
-            tabs.forEach(tab => tab.classList.remove('active'));
-            tabElement.classList.add('active');
-            
-            if (tabElement.id === 'tabPerfil') {
-                window.location.href = '../PerfilUsuario/PerfilUsuarioScreen.html';
-            }
+        function showNotification(msg, type='success') {
+            notification.textContent = msg;
+            notification.style.display = 'block';
+            notification.style.background = type === 'success' ? '#7D1B1C' : '#f56565';
+            setTimeout(() => notification.style.display = 'none', 3000);
         }
 
         // Event Listeners
         btnAddMap.addEventListener('click', () => {
-            // 1. Limpa o mapa atual (para forçar o modal na tela de Colaboração)
-            localStorage.removeItem('currentMap'); 
-            
-            // 2. Redireciona DIRETAMENTE para a tela de colaboração (Novo Fluxo).
-            window.location.href = '../../screens/Colaboracao/ColaboracaoScreen.html'; 
+             mapModal.style.display = 'flex';
+             mapModal.classList.add('active');
         });
-
-        // Eventos do Modal
         closeMapModal.addEventListener('click', () => {
-            mapModal.style.display = 'none';
-            mapModal.classList.remove('active');
+             mapModal.style.display = 'none';
+             mapModal.classList.remove('active');
         });
-
-        optionGallery.addEventListener('click', openImageGallery);
-        optionFiles.addEventListener('click', openFileSelector);
-
+        document.getElementById('optionGallery').addEventListener('click', () => document.getElementById('imageInput').click());
+        document.getElementById('optionFiles').addEventListener('click', () => document.getElementById('fileInput').click());
+        
         fileInput.addEventListener('change', handleImageSelection);
         imageInput.addEventListener('change', handleImageSelection);
-
-        window.addEventListener('click', (e) => {
-            if (e.target === mapModal) {
-                mapModal.style.display = 'none';
-                mapModal.classList.remove('active');
-            }
-        });
-
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                setActiveTab(tab);
-            });
-        });
-
-        btnProfile.addEventListener('click', () => {
-            window.location.href = '../PerfilUsuario/PerfilUsuarioScreen.html';
-        });
-
-        // Inicialização
-        document.addEventListener('DOMContentLoaded', () => {
-            // Verificar se usuário está logado
-            const user = localStorage.getItem('user');
-            if (!user) {
-                window.location.href = '../Login/LoginScreen.html';
-                return;
-            }
-            
-            loadUserMaps();
-            showNotification('Galeria carregada');
-        });
+        document.getElementById('btnProfile').addEventListener('click', () => window.location.href = '../PerfilUsuario/PerfilUsuarioScreen.html');
+        document.getElementById('tabPerfil').addEventListener('click', () => window.location.href = '../PerfilUsuario/PerfilUsuarioScreen.html');
     </script>
-
-    <style>
-        .galeria-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 16px;
-            width: 100%;
-        }
-
-        .map-card {
-            background: var(--surface-color);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .map-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-        }
-
-        .map-card-image {
-            position: relative;
-            width: 100%;
-            height: 160px;
-            overflow: hidden;
-        }
-
-        .map-card-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .map-card-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.3));
-            display: flex;
-            align-items: flex-end;
-            justify-content: flex-end;
-            padding: 12px;
-        }
-
-        .map-stats {
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 16px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .map-card-info {
-            padding: 16px;
-        }
-
-        .map-card-title {
-            color: var(--primary-color);
-            font-size: 16px;
-            font-weight: 600;
-            margin: 0 0 4px 0;
-        }
-
-        .map-card-date {
-            color: var(--text-muted);
-            font-size: 13px;
-            margin: 0;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-muted);
-        }
-
-        .empty-icon {
-            font-size: 64px;
-            margin-bottom: 16px;
-            opacity: 0.5;
-        }
-
-        .empty-state h3 {
-            color: var(--text-secondary);
-            margin: 0 0 8px 0;
-            font-size: 18px;
-        }
-
-        .empty-state p {
-            margin: 0;
-            font-size: 14px;
-        }
-
-        .subtitle {
-            color: var(--text-muted);
-            font-size: 14px;
-            font-weight: 400;
-            margin-top: 4px;
-        }
-
-        @media (max-width: 768px) {
-            .galeria-grid {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-
-            .map-card-image {
-                height: 140px;
-            }
-        }
-    </style>
 </body>
 </html>
