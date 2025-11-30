@@ -17,57 +17,89 @@
             <div class="top-bar">
                 <div class="top"></div>
                 <div class="content">
-                    <div class="title">Criar Conta Online</div>
+                    <div class="title">Criar Conta</div>
                 </div>
             </div>
             
             <div class="login-container">
                 <div class="login-header">
-                    <div class="login-icon">☁️</div>
-                    <h2 class="login-title">Junte-se ao Time</h2>
-                    <p class="login-subtitle">Seus dados salvos na nuvem</p>
+                    <div class="login-icon">📝</div>
+                    <h2 class="login-title">Cadastre-se</h2>
+                    <p class="login-subtitle">Preencha seus dados para continuar</p>
                 </div>
                 
                 <div class="login-form">
+                    
                     <div class="form-group">
                         <label for="nome">Nome completo</label>
-                        <input type="text" id="nome" placeholder="Digite seu nome" required>
+                        <input 
+                            type="text" 
+                            id="nome" 
+                            name="nome" 
+                            placeholder="Digite seu nome"
+                            required
+                        >
                     </div>
 
                     <div class="form-group">
                         <label for="email">E-mail</label>
-                        <input type="email" id="email" placeholder="exemplo@email.com" required>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            placeholder="exemplo@email.com"
+                            required
+                        >
                     </div>
                     
                     <div class="form-group">
                         <label for="senha">Senha</label>
-                        <input type="password" id="senha" placeholder="Mínimo 6 caracteres" required>
+                        <input 
+                            type="password" 
+                            id="senha" 
+                            name="senha" 
+                            placeholder="Sua senha (mín. 6 dígitos)"
+                            required
+                        >
                     </div>
                     
                     <div class="form-group">
                         <label for="senha2">Confirmar senha</label>
-                        <input type="password" id="senha2" placeholder="Repita sua senha" required>
+                        <input 
+                            type="password" 
+                            id="senha2" 
+                            name="senha2" 
+                            placeholder="Repita sua senha"
+                            required
+                        >
                     </div>
 
-                    <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px; margin-top: 10px;">
-                        <input type="checkbox" id="checkArqueologo" style="width: auto;">
-                        <label for="checkArqueologo" style="margin: 0;">Sou Arqueólogo (Requer Código)</label>
+                    <div class="form-group" style="flex-direction: row; align-items: center; gap: 12px; padding: 4px 0;">
+                        <input type="checkbox" id="checkArqueologo" style="width: 20px; height: 20px;">
+                        <label for="checkArqueologo" style="margin: 0; font-weight: normal;">Sou Arqueólogo</label>
                     </div>
 
                     <div class="form-group" id="groupCodigo" style="display: none;">
                         <label for="codigoAcesso">Código de Acesso</label>
-                        <input type="text" id="codigoAcesso" placeholder="Insira o código secreto">
+                        <input 
+                            type="text" 
+                            id="codigoAcesso" 
+                            placeholder="Insira o código secreto"
+                        >
                     </div>
                     
                     <button class="login-btn" id="btnCadastrar" onclick="registrar()">
-                        <span>Criar Conta</span>
+                        <span>Cadastrar</span>
                     </button>
                 </div>
                 
                 <div class="login-footer">
-                    <p>Já tem conta? <a href="LoginScreen.html">Entrar</a></p>
+                    <p>
+                        Já tem conta? <a href="LoginScreen.html">Entrar</a>
+                    </p>
                 </div>
             </div>
+
             <div class="notification" id="notification"></div>
         </div>
     </div>
@@ -81,9 +113,9 @@
         const notification = document.getElementById('notification');
         const btnCadastrar = document.getElementById('btnCadastrar');
 
-        const ARQUEOLOGO_CODE = "76583"; // Código secreto
+        const ARQUEOLOGO_CODE = "76583"; // Código de segurança
 
-        // Mostrar campo de código apenas se marcar Arqueólogo
+        // Mostrar/Ocultar campo de código
         checkArqueologo.addEventListener('change', (e) => {
             groupCodigo.style.display = e.target.checked ? 'flex' : 'none';
         });
@@ -103,6 +135,7 @@
             const isArqueologo = checkArqueologo.checked;
             const codigo = document.getElementById("codigoAcesso").value.trim();
 
+            // Validações
             if (!nome || !email || !senha || !senha2) {
                 showNotification("Preencha todos os campos.", 'error');
                 return;
@@ -120,13 +153,12 @@
                 return;
             }
 
-            // Inicia criação no Firebase
+            // Inicia processo no Firebase
             btnCadastrar.disabled = true;
-            btnCadastrar.innerHTML = "<span>Criando...</span>";
+            btnCadastrar.innerHTML = "<span>Criando conta...</span>";
 
             auth.createUserWithEmailAndPassword(email, senha)
                 .then((userCredential) => {
-                    // Usuário criado na autenticação, agora salvar dados no banco
                     const user = userCredential.user;
                     const tipo = isArqueologo ? 'arqueologo' : 'publico';
 
@@ -137,24 +169,29 @@
                         createdAt: new Date().toISOString()
                     };
 
-                    // Salva em /users/{uid}
+                    // Salva dados no Realtime Database
                     database.ref('users/' + user.uid).set(userData)
                         .then(() => {
-                            showNotification("Conta criada com sucesso!");
-                            // Salva backup local para redirecionamento rápido
+                            showNotification("Cadastro realizado com sucesso!");
+                            
+                            // Salva backup local para agilizar o primeiro load
                             localStorage.setItem('user', JSON.stringify(userData));
                             
+                            // Redireciona para o login (ou direto para a galeria se preferir)
                             setTimeout(() => {
                                 window.location.href = "LoginScreen.html";
                             }, 1500);
                         });
                 })
                 .catch((error) => {
-                    let msg = error.message;
-                    if (error.code === 'auth/email-already-in-use') msg = "E-mail já cadastrado.";
-                    showNotification("Erro: " + msg, 'error');
+                    console.error(error);
+                    let msg = "Erro ao criar conta.";
+                    if (error.code === 'auth/email-already-in-use') msg = "Este e-mail já está em uso.";
+                    if (error.code === 'auth/invalid-email') msg = "E-mail inválido.";
+                    
+                    showNotification(msg, 'error');
                     btnCadastrar.disabled = false;
-                    btnCadastrar.innerHTML = "<span>Criar Conta</span>";
+                    btnCadastrar.innerHTML = "<span>Cadastrar</span>";
                 });
         }
     </script>
