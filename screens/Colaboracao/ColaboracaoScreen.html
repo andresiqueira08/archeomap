@@ -19,6 +19,7 @@
                 <div class="content">
                     <div class="title">Colaboração (Online)</div>
                     <div class="icon-buttons">
+                        <div class="icon" id="btnChangeImage" title="Trocar Imagem do Mapa" style="display: none;">🖼️</div>
                         <div class="icon" id="btnExport" title="Exportar Dados">📤</div>
                     </div>
                 </div>
@@ -64,10 +65,6 @@
                     </div>
             </div>
             
-            <div class="secondary" id="btnAddMap" style="display: none;">
-                <div class="title10">Adicionar mapa</div>
-            </div>
-            
             <div class="bottom-nav">
                 <div class="tab active" id="tabHome">
                     <div class="icon2">🏠</div>
@@ -84,6 +81,8 @@
             </div>
             
             <div class="notification" id="notification"></div>
+            
+            <input type="file" id="mapImageInput" accept="image/*" style="display: none;">
         </div>
     </div>
 

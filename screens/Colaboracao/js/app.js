@@ -1,12 +1,11 @@
 // archeomap-master/screens/Colaboracao/js/app.js
 
 // --- VARIÁVEIS DE PERMISSÃO ---
-// Recupera o usuário salvo no login para saber se é 'arqueologo' ou 'publico'
 const localUser = JSON.parse(localStorage.getItem('user'));
-const userType = localUser ? localUser.type : 'publico'; // Padrão é publico se der erro
+const userType = localUser ? localUser.type : 'publico'; 
 const isArqueologo = userType === 'arqueologo';
 
-// Recupera ID do mapa vindo da Galeria
+// Recupera ID do mapa
 const currentMapId = localStorage.getItem('currentMapId');
 
 // Elementos da interface
@@ -19,12 +18,15 @@ const zeroPoints = document.getElementById('zeroPoints');
 const lastUpdate = document.getElementById('lastUpdate');
 const artifactsGrid = document.getElementById('artifactsGrid');
 
-// Elementos da tela do mapa detalhado (Canvas)
+// Elementos de Troca de Imagem
+const btnChangeImage = document.getElementById('btnChangeImage');
+const mapImageInput = document.getElementById('mapImageInput');
+
+// Elementos da tela do mapa detalhado
 const mainScreen = document.querySelector('.main-screen');
 const mapDetailScreen = document.querySelector('.map-detail-screen');
 const backButton = document.getElementById('backButton');
 const detailedMapCanvas = document.getElementById('detailedMapCanvas');
-const coordinatesDisplay = document.getElementById('coordinatesDisplay');
 const mapGrid = document.getElementById('mapGrid');
 const detailedMapPoints = document.getElementById('detailedMapPoints');
 const addingModeIndicator = document.getElementById('addingModeIndicator');
@@ -37,7 +39,7 @@ const btnAddCommonPoint = document.getElementById('btnAddCommonPoint');
 const pointDetailsModal = document.getElementById('pointDetailsModal');
 const closePointDetailsModal = document.getElementById('closePointDetailsModal');
 
-// Elementos de detalhes do ponto (Inputs)
+// Inputs de Detalhes
 const pointName = document.getElementById('pointName');
 const pointDescription = document.getElementById('pointDescription');
 const pointCategory = document.getElementById('pointCategory');
@@ -48,12 +50,12 @@ const pointCoordinates = document.getElementById('pointCoordinates');
 const pointDiscoveryDate = document.getElementById('pointDiscoveryDate');
 const pointTags = document.getElementById('pointTags');
 
-// Botões de Ação do Modal
+// Botões de Ação
 const savePointDetails = document.getElementById('savePointDetails');
 const btnDeletePoint = document.getElementById('btnDeletePoint');
 
-// Estado da aplicação
-let mapPoints = []; // Sincronizado com Firebase
+// Estado
+let mapPoints = [];
 let isMapLoaded = false;
 let currentMapImage = null;
 let canvasContext = null;
@@ -69,24 +71,22 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
     
-    // Configuração inicial de interface baseada no tipo de usuário
     aplicarPermissoesDeUsuario();
-
     carregarMapaFirebase();
     iniciarOuvintesFirebase();
 });
 
-// Função para esconder ferramentas de edição se for público
+// Configura interface baseada no tipo de usuário
 function aplicarPermissoesDeUsuario() {
-    if (!isArqueologo) {
-        // Esconde botões de adicionar pontos na tela detalhada
-        if(btnAddZeroPoint) btnAddZeroPoint.style.display = 'none';
-        if(btnAddCommonPoint) btnAddCommonPoint.style.display = 'none';
-        
-        // Remove indicadores de modo de adição se existirem
-        if(addingModeIndicator) addingModeIndicator.remove();
-        
-        console.log("Modo Espectador Ativado: Usuário Público");
+    if (isArqueologo) {
+        // Mostra botão de trocar imagem
+        if (btnChangeImage) btnChangeImage.style.display = 'flex';
+    } else {
+        // Esconde ferramentas de edição para Público
+        if (btnAddZeroPoint) btnAddZeroPoint.style.display = 'none';
+        if (btnAddCommonPoint) btnAddCommonPoint.style.display = 'none';
+        if (addingModeIndicator) addingModeIndicator.remove();
+        console.log("Modo Espectador Ativado");
     }
 }
 
@@ -97,38 +97,73 @@ function showNotification(message, type = 'success') {
     setTimeout(() => { notification.style.display = 'none'; }, 3000);
 }
 
-// --- FIREBASE: CARREGAR DADOS ---
+// --- FIREBASE: CARREGAR E ATUALIZAR ---
 
 function carregarMapaFirebase() {
+    // Carrega dados iniciais do mapa (Imagem, nome, etc)
     const mapRef = database.ref('maps/' + currentMapId);
-    mapRef.once('value').then((snapshot) => {
+    mapRef.on('value', (snapshot) => {
         const data = snapshot.val();
         if (data && data.image) {
-            currentMapImage = data.image;
-            loadMapVisuals(currentMapImage);
-        } else {
-            showNotification("Erro ao carregar imagem do mapa.", "error");
+            // Se a imagem mudar no servidor, atualiza aqui em tempo real
+            if (currentMapImage !== data.image) {
+                currentMapImage = data.image;
+                loadMapVisuals(currentMapImage);
+            }
+        } else if (!data) {
+            showNotification("Mapa não encontrado.", "error");
         }
     });
 }
 
 function iniciarOuvintesFirebase() {
     const pointsRef = database.ref(`maps/${currentMapId}/pointsData`);
-    
     pointsRef.on('value', (snapshot) => {
         const data = snapshot.val();
         mapPoints = [];
-        
         if (data) {
             Object.keys(data).forEach(key => {
-                mapPoints.push({
-                    id: key,
-                    ...data[key]
-                });
+                mapPoints.push({ id: key, ...data[key] });
             });
         }
-        
         atualizarInterfaceGlobal();
+    });
+}
+
+// --- TROCA DE IMAGEM (NOVO) ---
+
+if (btnChangeImage) {
+    btnChangeImage.addEventListener('click', () => {
+        mapImageInput.click();
+    });
+}
+
+if (mapImageInput) {
+    mapImageInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+            
+            // Validação de tamanho simples
+            if (file.size > 2 * 1024 * 1024) {
+                showNotification("Imagem muito grande! Máximo 2MB.", "error");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const novaImagemBase64 = e.target.result;
+                
+                // Atualiza no Firebase
+                database.ref('maps/' + currentMapId).update({ image: novaImagemBase64 })
+                    .then(() => {
+                        showNotification("Imagem do mapa atualizada!");
+                        loadMapVisuals(novaImagemBase64); // Atualiza localmente já
+                    })
+                    .catch(err => showNotification("Erro ao atualizar: " + err.message, "error"));
+            };
+            reader.readAsDataURL(file);
+        }
+        event.target.value = ''; // Limpa input
     });
 }
 
@@ -143,6 +178,11 @@ function loadMapVisuals(imageSrc) {
     mapArea.classList.add('has-map');
     interactiveMap.style.display = 'block';
     isMapLoaded = true;
+    
+    // Se o canvas estiver aberto, redesenha
+    if (mapDetailScreen.classList.contains('active')) {
+        drawDetailedMap();
+    }
 }
 
 function atualizarInterfaceGlobal() {
@@ -276,11 +316,7 @@ function renderDetailedPoint(point) {
 // --- ADIÇÃO DE PONTOS ---
 
 function activateAddingMode(type) {
-    // BLOQUEIO DE SEGURANÇA EXTRA
-    if (!isArqueologo) {
-        showNotification("Apenas arqueólogos podem adicionar pontos.", "error");
-        return;
-    }
+    if (!isArqueologo) return;
 
     addingPointMode = type;
     detailedMapCanvas.style.cursor = 'crosshair';
@@ -296,7 +332,6 @@ function deactivateAddingMode() {
 }
 
 detailedMapCanvas.addEventListener('click', (event) => {
-    // Se não for arqueólogo ou não estiver em modo de adição, ignora
     if (!addingPointMode || !isArqueologo) return;
     
     const rect = detailedMapCanvas.getBoundingClientRect();
@@ -322,7 +357,7 @@ detailedMapCanvas.addEventListener('click', (event) => {
 });
 
 function salvarPontoNoFirebase(x, y, type, extraDetails) {
-    if (!isArqueologo) return; // Bloqueio final
+    if (!isArqueologo) return;
 
     const novoPonto = {
         x: x, 
@@ -359,7 +394,6 @@ function abrirModalEdicao(point) {
     if(pointCoordinates) pointCoordinates.textContent = `X: ${Math.round(point.x)}, Y: ${Math.round(point.y)}`;
     if(pointDiscoveryDate) pointDiscoveryDate.value = point.details.discoveryDate || '';
 
-    // Tags
     if(pointTags) {
         document.querySelectorAll('.tag').forEach(tag => {
             tag.classList.remove('selected');
@@ -369,27 +403,23 @@ function abrirModalEdicao(point) {
         });
     }
 
-    // --- LÓGICA DE PERMISSÃO NO MODAL ---
     const inputs = pointDetailsModal.querySelectorAll('input, select, textarea');
     
     if (isArqueologo) {
-        // Se for Arqueólogo: TUDO LIBERADO
         inputs.forEach(input => input.disabled = false);
         savePointDetails.style.display = 'block';
         btnDeletePoint.style.display = 'block';
-        if(pointTags) pointTags.style.pointerEvents = 'auto'; // Habilita cliques nas tags
+        if(pointTags) pointTags.style.pointerEvents = 'auto';
     } else {
-        // Se for Público: SOMENTE LEITURA
         inputs.forEach(input => input.disabled = true);
         savePointDetails.style.display = 'none';
         btnDeletePoint.style.display = 'none';
-        if(pointTags) pointTags.style.pointerEvents = 'none'; // Desabilita cliques nas tags
+        if(pointTags) pointTags.style.pointerEvents = 'none';
     }
 
     pointDetailsModal.style.display = 'flex';
 }
 
-// Botão Salvar (Só funciona se o botão estiver visível/clicável, mas adicionamos check extra)
 savePointDetails.addEventListener('click', () => {
     if (!editingPointId || !isArqueologo) return;
     
@@ -416,7 +446,6 @@ savePointDetails.addEventListener('click', () => {
         });
 });
 
-// Botão Excluir
 btnDeletePoint.addEventListener('click', () => {
     if (!editingPointId || !isArqueologo) return;
     
@@ -431,7 +460,6 @@ btnDeletePoint.addEventListener('click', () => {
 
 // --- UI HELPERS ---
 
-// Grade
 function drawGrid() {
     mapGrid.innerHTML = '';
     for (let i = 50; i < detailedMapCanvas.width; i += 50) {
@@ -453,7 +481,6 @@ document.getElementById('btnGridToggle').addEventListener('click', () => {
     mapGrid.style.display = isGridVisible ? 'block' : 'none';
 });
 
-// Tags selection
 if(pointTags) {
     pointTags.querySelectorAll('.tag').forEach(tag => {
         tag.addEventListener('click', () => {
@@ -462,7 +489,7 @@ if(pointTags) {
     });
 }
 
-// Botões de ação (Eventos)
+// Botões
 if(btnAddZeroPoint) btnAddZeroPoint.addEventListener('click', () => activateAddingMode('zero'));
 if(btnAddCommonPoint) btnAddCommonPoint.addEventListener('click', () => activateAddingMode('common'));
 if(cancelAddMode) cancelAddMode.addEventListener('click', deactivateAddingMode);
