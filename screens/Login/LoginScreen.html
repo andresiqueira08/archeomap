@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Login - Mapa Colaborativo</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../../css/mobile.css">
+</head>
+<body>
+    <div class="screen login-screen active">
+        <div class="page">
+            <div class="top-bar">
+                <div class="top"></div>
+                <div class="content">
+                    <div class="title">Mapa Colaborativo</div>
+                </div>
+            </div>
+            
+            <div class="login-container">
+                <div class="login-header">
+                    <div class="login-icon">🗺️</div>
+                    <h2 class="login-title">Bem-vindo</h2>
+                    <p class="login-subtitle">Acesse sua conta para continuar</p>
+                </div>
+                
+                <form class="login-form" id="loginForm">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            placeholder="seu@email.com"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Senha</label>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            placeholder="Sua senha"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group access-code-group">
+                        <label for="accessCode">Código de Acesso (Apenas Arqueólogos)</label>
+                        <input 
+                            type="text" 
+                            id="accessCode" 
+                            name="accessCode" 
+                            placeholder="Insira o código aqui"
+                        >
+                        <p class="code-info">Para acesso especial, insira seu código secreto de Arqueólogo.</p>
+                    </div>
+                    <button type="submit" class="login-btn" id="loginBtn">
+                        <span>Entrar</span>
+                    </button>
+                </form>
+                
+                <div class="login-footer">
+                </div>
+            </div>
+          <p>
+  <p>Não tem conta? <a href="CadastroScreen.html">Cadastre-se</a></p>
+
+
+
+            <div class="notification" id="notification"></div>
+        </div>
+    </div>
+
+    <script>
+        // O código secreto é mantido apenas aqui no JavaScript
+        const ARQUEOLOGO_CODE = "76583";
+
+        // Elementos
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const notification = document.getElementById('notification');
+
+        // Função para mostrar notificação
+        function showNotification(message, type = 'success') {
+            notification.textContent = message;
+            notification.style.display = 'block';
+            notification.style.background = type === 'success' ? 'var(--primary-color)' : 'var(--error-color)';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Função para realizar login
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const accessCode = document.getElementById('accessCode').value.trim();
+            
+            let userType = 'publico';
+            let name = 'Usuário';
+            let isAuthenticated = false;
+            
+            // Tenta obter as credenciais salvas
+            const credentialsString = localStorage.getItem("userCredentials");
+            const savedCredentials = credentialsString ? JSON.parse(credentialsString) : null;
+
+            // 1. Verificação do Código de Arqueólogo (Sigiloso)
+            if (accessCode === ARQUEOLOGO_CODE) {
+                userType = 'arqueologo';
+                isAuthenticated = true;
+                
+                // Tenta carregar o nome cadastrado, INDEPENDENTE do tipo salvo.
+                if (savedCredentials && savedCredentials.name) {
+                    name = savedCredentials.name; 
+                } else {
+                    // Fallback: Se o usuário nunca se cadastrou, usa um nome padrão
+                    name = 'Arqueólogo (Acesso Rápido)'; 
+                }
+            } 
+            // 2. Verificação de E-mail e Senha
+            else if (email && password) {
+                if (savedCredentials && savedCredentials.email === email && savedCredentials.password === password) {
+                    // Login bem-sucedido com credenciais salvas
+                    userType = savedCredentials.type;
+                    name = savedCredentials.name;
+                    isAuthenticated = true;
+                } else {
+                    // Falha na autenticação (apenas simulação)
+                    showNotification('E-mail ou Senha incorretos. Tente novamente.', 'error');
+                    return;
+                }
+            } 
+            // 3. Requer que E-mail e Senha sejam preenchidos se o código não foi usado
+            else {
+                showNotification('Por favor, preencha o E-mail e a Senha ou use o Código de Acesso.', 'error');
+                return;
+            }
+            
+            if (!isAuthenticated) {
+                showNotification('Falha desconhecida no login.', 'error');
+                return;
+            }
+
+            // Inicia o processo de login
+            loginBtn.innerHTML = '<span>Entrando...</span>';
+            loginBtn.disabled = true;
+            
+            setTimeout(() => {
+                // Salvar dados do usuário para a sessão (usado nas outras telas)
+                localStorage.setItem('user', JSON.stringify({
+                    email: email || 'access_code@coliceu.com',
+                    name: name,
+                    type: userType
+                }));
+                
+                showNotification('Login realizado com sucesso!');
+                
+                // Redirecionar para a galeria apropriada
+                setTimeout(() => {
+                    if (userType === 'arqueologo') {
+                        window.location.href = '../GaleriaArqueologos/GaleriaArqueologosScreen.html';
+                    } else {
+                        window.location.href = '../GaleriaPublico/GaleriaPublicoScreen.html';
+                    }
+                }, 1000);
+                
+            }, 1500);
+        }
+
+        // Event Listeners
+        loginForm.addEventListener('submit', handleLogin);
+
+        /* // BLOCO REMOVIDO PARA FORÇAR O LOGIN TODA VEZ: 
+        // O usuário solicitou que o login fosse obrigatório a cada acesso.
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = localStorage.getItem('user');
+            if (user) {
+                const userData = JSON.parse(user);
+                // Redireciona imediatamente se já estiver logado
+                if (userData.type === 'arqueologo') {
+                    window.location.href = '../GaleriaArqueologos/GaleriaArqueologosScreen.html';
+                } else {
+                    window.location.href = '../GaleriaPublico/GaleriaPublicoScreen.html';
+                }
+            }
+        });
+        */
+    </script>
+
+    <style>
+        /* Estilos gerais (mantidos do estado anterior) */
+        .login-container {
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            align-items: center;
+            justify-content: center;
+            min-height: 70vh;
+        }
+
+        .login-header {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .login-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .login-title {
+            color: var(--primary-color);
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .login-subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+            margin: 0;
+        }
+
+        .login-form {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            padding: 14px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            background: var(--surface-color);
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(125, 27, 28, 0.1);
+        }
+
+        .login-btn {
+            background: linear-gradient(135deg, var(--primary-color), #9d2c2e);
+            border: none;
+            border-radius: 8px;
+            padding: 16px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(125, 27, 28, 0.4);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        /* ESTILO PARA A INFORMAÇÃO DO CÓDIGO */
+        .code-info {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .access-code-group {
+            border-top: 1px solid var(--border-color);
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .login-container {
+                padding: 30px 16px;
+                min-height: 60vh;
+            }
+
+            .login-title {
+                font-size: 22px;
+            }
+
+            .login-subtitle {
+                font-size: 15px;
+            }
+        }
+    </style>
+
+</body>
+</html>

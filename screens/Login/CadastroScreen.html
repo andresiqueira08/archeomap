@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Cadastro - Mapa Colaborativo</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../../css/mobile.css">
+</head>
+<body>
+    <div class="screen cadastro-screen active">
+        <div class="page">
+            <div class="top-bar">
+                <div class="top"></div>
+                <div class="content">
+                    <div class="title">Criar Conta</div>
+                </div>
+            </div>
+            
+            <div class="login-container">
+                <div class="login-header">
+                    <div class="login-icon">📝</div>
+                    <h2 class="login-title">Cadastre-se</h2>
+                    <p class="login-subtitle">Preencha seus dados para continuar</p>
+                </div>
+                
+                <div class="login-form">
+                    
+                    <div class="form-group">
+                        <label for="nome">Nome completo</label>
+                        <input 
+                            type="text" 
+                            id="nome" 
+                            name="nome" 
+                            placeholder="Digite seu nome"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">E-mail</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            placeholder="exemplo@email.com"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="senha">Senha</label>
+                        <input 
+                            type="password" 
+                            id="senha" 
+                            name="senha" 
+                            placeholder="Sua senha"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="senha2">Confirmar senha</label>
+                        <input 
+                            type="password" 
+                            id="senha2" 
+                            name="senha2" 
+                            placeholder="Repita sua senha"
+                            required
+                        >
+                    </div>
+                    
+                    <button class="login-btn" onclick="registrar()">
+                        <span>Cadastrar</span>
+                    </button>
+                </div>
+                
+                <div class="login-footer">
+                    <p>
+                        Já tem conta? <a href="LoginScreen.html">Entrar</a>
+                    </p>
+                </div>
+            </div>
+
+            <div class="notification" id="notification"></div>
+        </div>
+    </div>
+
+    <script>
+    function registrar() {
+        const nome = document.getElementById("nome").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const senha = document.getElementById("senha").value.trim();
+        const senha2 = document.getElementById("senha2").value.trim();
+
+        if (!nome || !email || !senha || !senha2) {
+            alert("Preencha todos os campos.");
+            return;
+        }
+
+        if (senha !== senha2) {
+            alert("As senhas não coincidem.");
+            return;
+        }
+        
+        // Simulação de tipo de usuário, padrão 'publico' ou 'arqueologo'
+        const userType = email.includes('arqueologo') ? 'arqueologo' : 'publico';
+
+        // *** NOVO OBJETO DE CREDENCIAIS SALVAS ***
+        const userCredentials = { 
+            email: email,
+            password: senha, // A senha é salva (não criptografada) para a simulação de login
+            name: nome,
+            type: userType
+        };
+
+        // Salva as credenciais no localStorage (para a validação no login)
+        localStorage.setItem("userCredentials", JSON.stringify(userCredentials));
+        
+        // Remove qualquer sessão de login antiga
+        localStorage.removeItem("user");
+
+        alert("Cadastro realizado com sucesso! Faça login com seu E-mail e Senha.");
+        window.location.href = "LoginScreen.html";
+    }
+</script>
+
+    <style>
+        .login-container {
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            align-items: center;
+            justify-content: center;
+            min-height: 70vh;
+        }
+
+        .login-header {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .login-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .login-title {
+            color: var(--primary-color);
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .login-subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+            margin: 0;
+        }
+
+        .login-form {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            padding: 14px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            background: var(--surface-color);
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(125, 27, 28, 0.1);
+        }
+
+        .login-btn {
+            background: linear-gradient(135deg, var(--primary-color), #9d2c2e);
+            border: none;
+            border-radius: 8px;
+            padding: 16px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(125, 27, 28, 0.4);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .login-container {
+                padding: 30px 16px;
+                min-height: 60vh;
+            }
+
+            .login-title {
+                font-size: 22px;
+            }
+
+            .login-subtitle {
+                font-size: 15px;
+            }
+        }
+    </style>
+</body>
+</html>
