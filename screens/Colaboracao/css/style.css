@@ -1213,3 +1213,12 @@ body {
     font-weight: 500;
     margin-top: 4px;
 }
+/* Regras para o Modo Leitura (Usuário Público) */
+body.modo-leitura #btnAddMap,
+body.modo-leitura #btnAddZeroPoint,
+body.modo-leitura #btnAddCommonPoint,
+body.modo-leitura #addingModeIndicator,
+body.modo-leitura .modal-option#optionFiles, 
+body.modo-leitura .modal-option#optionGallery {
+    display: none !important; 
+}
