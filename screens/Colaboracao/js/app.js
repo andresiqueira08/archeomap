@@ -63,7 +63,7 @@ let currentPhoto = null;
 let editingPointId = null;
 
 // Detectar dispositivo móvel
-const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+const isMobile = /Android|webOS|iPhone|iPad|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
 // Função para mostrar notificação
 function showNotification(message, type = 'success') {
@@ -93,7 +93,106 @@ function handlePhotoUpload(event) {
     }
 }
 
-// Função para adicionar ponto no mapa
+// ** PERSISTÊNCIA: Salva o estado atual do mapa no localStorage **
+function saveCurrentMapState() {
+    // Verifica se há um mapa carregado para salvar
+    if (!isMapLoaded || !currentMapImage) return;
+
+    const currentMapString = localStorage.getItem('currentMap');
+    if (!currentMapString) return;
+
+    // 1. Atualiza os dados do mapa atual
+    let currentMap = JSON.parse(currentMapString);
+    currentMap.pointsData = mapPoints;
+    currentMap.points = findingsCount + zeroPointsCount; 
+    currentMap.image = currentMapImage;
+    
+    // 2. Salva o mapa atualizado no storage
+    localStorage.setItem('currentMap', JSON.stringify(currentMap));
+
+    // 3. Atualiza a lista principal de mapas (para a galeria)
+    const savedMapsString = localStorage.getItem('userMaps');
+    let userMaps = savedMapsString ? JSON.parse(savedMapsString) : [];
+    
+    const mapIndex = userMaps.findIndex(m => m.id === currentMap.id);
+    if (mapIndex !== -1) {
+        userMaps[mapIndex] = currentMap;
+    } else {
+        // Se o mapa não foi encontrado, adiciona-o (caso de falha de sync anterior)
+        userMaps.unshift(currentMap);
+    }
+    localStorage.setItem('userMaps', JSON.stringify(userMaps));
+    
+    console.log("Estado do mapa salvo com sucesso.");
+}
+
+// ** CARREGAMENTO: Função auxiliar para carregar o mapa após seleção/redirect **
+function loadMapFromData(mapData) {
+    // 1. Update global state from mapData
+    mapPoints = mapData.pointsData || [];
+    findingsCount = mapPoints.filter(p => p.type !== 'zero').length;
+    zeroPointsCount = mapPoints.filter(p => p.type === 'zero').length;
+    
+    totalFindings.textContent = findingsCount;
+    zeroPoints.textContent = zeroPointsCount;
+    artifactsGrid.innerHTML = '';
+    
+    // 2. Load the base map image (this also sets currentMapImage and updates UI flags)
+    loadMap(mapData.image, true);
+    
+    // 3. Re-render UI components
+    updateArtifactGrid();
+    
+    // 4. Add points to the main interactive map
+    const existingPoints = interactiveMap.querySelectorAll('.map-point');
+    existingPoints.forEach(point => point.remove());
+
+    mapPoints.forEach(p => {
+        const point = document.createElement('div');
+        point.className = `map-point ${p.type}-point`;
+        point.style.left = `${p.x}%`;
+        point.style.top = `${p.y}%`;
+        point.setAttribute('data-title', p.details.name);
+        point.setAttribute('data-id', p.id);
+        point.innerHTML = p.type === 'zero' ? '⭐' : '💜';
+        
+        // CORREÇÃO: O listener deve ser vinculado ao *elemento DOM* 'point',
+        // e 'showPointDetails' buscará o objeto 'p' (point object) pelo 'data-id'.
+        point.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // A função showPointDetails recebe o elemento DOM e procura o objeto por ID.
+            showPointDetails(point); 
+        });
+        
+        interactiveMap.appendChild(point);
+    });
+    
+    showNotification('Mapa de trabalho carregado.');
+}
+
+// ** INICIALIZAÇÃO: Função para carregar o mapa atual do localStorage ou abrir o modal **
+function loadCurrentMapFromStorage() {
+    const currentMapString = localStorage.getItem('currentMap');
+    
+    if (currentMapString) {
+        const currentMap = JSON.parse(currentMapString);
+        
+        // Se a imagem existir (mapa já criado/selecionado), carrega-o
+        if (currentMap.image) {
+             loadMapFromData(currentMap);
+             btnAddMap.style.display = 'none';
+             return;
+        } 
+    } 
+    
+    // Fluxo para 'Novo Trabalho' ou se o mapa atual não tem imagem, abre o modal.
+    mapModal.style.display = 'flex';
+    mapModal.classList.add('active');
+    showNotification('Selecione uma imagem para iniciar o novo mapa.');
+    btnAddMap.style.display = 'block';
+}
+
+// Função para adicionar ponto no mapa (Omitida para brevidade...)
 function addMapPoint(x, y, title, type = 'common', details = {}) {
     const pointId = Date.now();
     const point = document.createElement('div');
@@ -152,10 +251,12 @@ function addMapPoint(x, y, title, type = 'common', details = {}) {
         renderDetailedPoints();
     }
     
+    saveCurrentMapState(); // Salvar após adicionar ponto
+    
     return pointObj;
 }
 
-// Função para adicionar artefato ao grid
+// Função para adicionar artefato ao grid (Omitida para brevidade...)
 function addArtifactToGrid(artifact) {
     const artifactCard = document.createElement('div');
     artifactCard.className = 'artifact-card';
@@ -203,7 +304,7 @@ function addArtifactToGrid(artifact) {
     artifactsGrid.appendChild(artifactCard);
 }
 
-// Função para mostrar detalhes do artefato
+// Função para mostrar detalhes do artefato (Omitida para brevidade...)
 function showArtifactDetails(artifact) {
     editingPointId = artifact.id;
     
@@ -244,7 +345,7 @@ function showArtifactDetails(artifact) {
     savePointDetails.onclick = updateCurrentPoint;
 }
 
-// Função para atualizar o ponto atual
+// Função para atualizar o ponto atual (Omitida para brevidade...)
 function updateCurrentPoint() {
     const selectedTags = [];
     pointTags.querySelectorAll('.tag.selected').forEach(tag => {
@@ -276,6 +377,8 @@ function updateCurrentPoint() {
         renderDetailedPoints();
     }
     
+    saveCurrentMapState(); // Salvar após atualização
+    
     pointDetailsModal.style.display = 'none';
     pointDetailsModal.classList.remove('active');
     currentPhoto = null;
@@ -283,7 +386,7 @@ function updateCurrentPoint() {
     showNotification('Achado atualizado com sucesso!');
 }
 
-// Função para atualizar grid de artefatos
+// Função para atualizar grid de artefatos (Omitida para brevidade...)
 function updateArtifactGrid() {
     artifactsGrid.innerHTML = '';
     mapPoints.forEach(point => {
@@ -293,6 +396,7 @@ function updateArtifactGrid() {
 
 // Função para mostrar detalhes do ponto
 function showPointDetails(pointElement) {
+    // Procura o ID do ponto no atributo data-id do elemento DOM
     const pointId = pointElement.getAttribute('data-id');
     const point = mapPoints.find(p => p.id == pointId);
     
@@ -301,7 +405,7 @@ function showPointDetails(pointElement) {
     }
 }
 
-// Função para atualizar o tempo da última atualização
+// Função para atualizar o tempo da última atualização (Omitida para brevidade...)
 function updateLastUpdateTime() {
     const now = new Date();
     lastUpdate.textContent = now.toLocaleTimeString('pt-BR', { 
@@ -310,49 +414,44 @@ function updateLastUpdateTime() {
     });
 }
 
-// Função para alternar aba ativa
+// Função para alternar aba ativa (Omitida para brevidade...)
 function setActiveTab(tabElement) {
     tabs.forEach(tab => tab.classList.remove('active'));
     tabElement.classList.add('active');
 }
 
-// Função para carregar mapa
-function loadMap(imageSrc = null) {
+// Função para carregar mapa (Omitida para brevidade...)
+function loadMap(imageSrc = null, fromData = false) { 
     console.log('Carregando mapa...', imageSrc);
     
-    // Limpar pontos existentes
-    const existingPoints = interactiveMap.querySelectorAll('.map-point');
-    existingPoints.forEach(point => point.remove());
-    mapPoints = [];
-    findingsCount = 0;
-    zeroPointsCount = 0;
-    totalFindings.textContent = findingsCount;
-    zeroPoints.textContent = zeroPointsCount;
-    artifactsGrid.innerHTML = '';
+    if (!fromData) { // A limpeza de estado só ocorre se não estiver carregando de um mapa salvo.
+        const existingPoints = interactiveMap.querySelectorAll('.map-point');
+        existingPoints.forEach(point => point.remove());
+        mapPoints = [];
+        findingsCount = 0;
+        zeroPointsCount = 0;
+        totalFindings.textContent = findingsCount;
+        zeroPoints.textContent = zeroPointsCount;
+        artifactsGrid.innerHTML = '';
+    }
     
     if (imageSrc) {
-        // Se uma imagem foi fornecida, usá-la
         interactiveMap.style.backgroundImage = `url(${imageSrc})`;
         interactiveMap.style.backgroundSize = 'cover';
         interactiveMap.style.backgroundPosition = 'center';
         currentMapImage = imageSrc;
-        
-        // Esconder o botão "Adicionar Mapa" quando um mapa é carregado
         btnAddMap.style.display = 'none';
     } else {
         return;
     }
     
-    // Atualizar interface
     mapPlaceholder.style.display = 'none';
     mapArea.classList.add('has-map');
     interactiveMap.style.display = 'block';
     isMapLoaded = true;
-    
-    showNotification('Mapa carregado com sucesso! Clique no mapa para ver a versão detalhada.');
 }
 
-// Função para abrir galeria de imagens
+// Função para abrir galeria de imagens (Omitida para brevidade...)
 function openImageGallery() {
     console.log('Abrindo galeria...');
     if (isMobile) {
@@ -365,13 +464,13 @@ function openImageGallery() {
     }
 }
 
-// Função para abrir seletor de arquivos
+// Função para abrir seletor de arquivos (Omitida para brevidade...)
 function openFileSelector() {
     console.log('Abrindo seletor de arquivos...');
     fileInput.click();
 }
 
-// Função para processar imagem selecionada
+// Função para processar imagem selecionada (Omitida para brevidade...)
 function handleImageSelection(event) {
     const file = event.target.files[0];
     console.log('Arquivo selecionado:', file);
@@ -381,9 +480,45 @@ function handleImageSelection(event) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 console.log('Imagem carregada com sucesso');
-                loadMap(e.target.result);
+                
+                const imageSrc = e.target.result;
+                
+                // 1. Cria ou Obtém o mapa (Para garantir um ID único para o Novo Trabalho)
+                let currentMapString = localStorage.getItem('currentMap');
+                let currentMap = currentMapString ? JSON.parse(currentMapString) : null;
+                
+                if (!currentMap || !currentMap.id) { 
+                    // Novo Mapa: Cria o objeto completo
+                    currentMap = {
+                        id: Date.now(),
+                        name: prompt('Nomeie seu novo mapa:') || `Mapa ${new Date().toLocaleDateString('pt-BR')}`,
+                        image: imageSrc,
+                        createdDate: new Date().toLocaleDateString('pt-BR'),
+                        points: 0,
+                        pointsData: []
+                    };
+                    
+                    // Adiciona à lista de mapas do usuário
+                    const savedMapsString = localStorage.getItem('userMaps');
+                    let userMaps = savedMapsString ? JSON.parse(savedMapsString) : [];
+                    userMaps.unshift(currentMap);
+                    localStorage.setItem('userMaps', JSON.stringify(userMaps));
+
+                } else {
+                    // Atualiza a imagem se já existia um placeholder
+                    currentMap.image = imageSrc;
+                }
+                
+                // 2. Define a imagem e salva como mapa atual
+                currentMap.image = imageSrc;
+                localStorage.setItem('currentMap', JSON.stringify(currentMap)); 
+                
+                // 3. Carrega o mapa e fecha o modal
+                loadMapFromData(currentMap);
                 mapModal.style.display = 'none';
                 mapModal.classList.remove('active');
+                showNotification(`Mapa "${currentMap.name}" criado e carregado com sucesso!`);
+
             };
             reader.onerror = function(e) {
                 console.error('Erro ao ler arquivo:', e);
@@ -398,7 +533,8 @@ function handleImageSelection(event) {
     event.target.value = '';
 }
 
-// Função para adicionar ponto zero
+
+// Função para adicionar ponto zero (Omitida para brevidade...)
 function addZeroPoint(x, y) {
     const altura = prompt('Digite a altura do ponto zero:');
     if (altura && !isNaN(parseFloat(altura))) {
@@ -419,7 +555,7 @@ function addZeroPoint(x, y) {
     }
 }
 
-// Função para adicionar ponto comum com modal IMEDIATO
+// Função para adicionar ponto comum com modal IMEDIATO (Omitida para brevidade...)
 function addCommonPoint(x, y) {
     // Primeiro adiciona o ponto com dados básicos
     const pointDetails = {
@@ -474,7 +610,7 @@ function addCommonPoint(x, y) {
     showNotification('Ponto adicionado! Preencha os detalhes.');
 }
 
-// Função para ativar modo de adição
+// Função para ativar modo de adição (Omitida para brevidade...)
 function activateAddingMode(type) {
     addingPointMode = type;
     detailedMapCanvas.style.cursor = 'crosshair';
@@ -489,14 +625,14 @@ function activateAddingMode(type) {
     }
 }
 
-// Função para desativar modo de adição
+// Função para desativar modo de adição (Omitida para brevidade...)
 function deactivateAddingMode() {
     addingPointMode = null;
     detailedMapCanvas.style.cursor = 'default';
     addingModeIndicator.style.display = 'none';
 }
 
-// Função para inicializar tela do mapa detalhado
+// Função para inicializar tela do mapa detalhado (Omitida para brevidade...)
 function initializeDetailedMap() {
     console.log('Inicializando mapa detalhado...');
     canvasContext = detailedMapCanvas.getContext('2d');
@@ -522,7 +658,7 @@ function initializeDetailedMap() {
     detailedMapCanvas.addEventListener('click', handleCanvasClick);
 }
 
-// Função para desenhar mapa detalhado
+// Função para desenhar mapa detalhado (Omitida para brevidade...)
 function drawDetailedMap() {
     console.log('Desenhando mapa detalhado...');
     canvasContext.clearRect(0, 0, detailedMapCanvas.width, detailedMapCanvas.height);
@@ -554,7 +690,7 @@ function drawDetailedMap() {
     }
 }
 
-// Função para desenhar grade
+// Função para desenhar grade (Omitida para brevidade...)
 function drawGrid() {
     const gridSize = 50;
     const width = detailedMapCanvas.width;
@@ -593,7 +729,7 @@ function drawGrid() {
     }
 }
 
-// Função para renderizar pontos no mapa detalhado
+// Função para renderizar pontos no mapa detalhado (Omitida para brevidade...)
 function renderDetailedPoints() {
     detailedMapPoints.innerHTML = '';
     
@@ -624,7 +760,7 @@ function renderDetailedPoints() {
     });
 }
 
-// Função para lidar com movimento do mouse no canvas
+// Função para lidar com movimento do mouse no canvas (Omitida para brevidade...)
 function handleCanvasMouseMove(event) {
     const rect = detailedMapCanvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
@@ -633,7 +769,7 @@ function handleCanvasMouseMove(event) {
     coordinatesDisplay.textContent = `X: ${Math.round(x)}, Y: ${Math.round(y)}`;
 }
 
-// Função para lidar com clique no canvas
+// Função para lidar com clique no canvas (Omitida para brevidade...)
 function handleCanvasClick(event) {
     if (!addingPointMode) return;
     
@@ -653,7 +789,7 @@ function handleCanvasClick(event) {
     }
 }
 
-// Função para alternar visibilidade da grade
+// Função para alternar visibilidade da grade (Omitida para brevidade...)
 function toggleGrid() {
     isGridVisible = !isGridVisible;
     mapGrid.style.display = isGridVisible ? 'block' : 'none';
@@ -668,7 +804,7 @@ function toggleGrid() {
     }
 }
 
-// Função para exportar dados
+// Função para exportar dados (Omitida para brevidade...)
 function exportData() {
     try {
         const exportData = {
@@ -700,13 +836,12 @@ function exportData() {
     }
 }
 
-// Event Listeners
+// Event Listeners (Omitida para brevidade...)
 btnAddMap.addEventListener('click', () => {
     mapModal.style.display = 'flex';
     mapModal.classList.add('active');
 });
 
-// Fechar modais
 closeMapModal.addEventListener('click', () => {
     mapModal.style.display = 'none';
     mapModal.classList.remove('active');
@@ -726,7 +861,6 @@ cancelPointDetails.addEventListener('click', () => {
     editingPointId = null;
 });
 
-// Fechar modal ao clicar fora
 window.addEventListener('click', (e) => {
     if (e.target === mapModal) {
         mapModal.style.display = 'none';
@@ -740,9 +874,9 @@ window.addEventListener('click', (e) => {
     }
 });
 
-// Navegação entre telas
 mapArea.addEventListener('click', () => {
     if (isMapLoaded) {
+        saveCurrentMapState(); // Salvar antes de ir para a tela detalhada
         mainScreen.classList.remove('active');
         mapDetailScreen.classList.add('active');
         setTimeout(() => {
@@ -752,16 +886,15 @@ mapArea.addEventListener('click', () => {
 });
 
 backButton.addEventListener('click', () => {
+    saveCurrentMapState(); // Salvar antes de voltar para a tela principal
     deactivateAddingMode();
     mapDetailScreen.classList.remove('active');
     mainScreen.classList.add('active');
 });
 
-// Opções do modal de mapa
 optionGallery.addEventListener('click', openImageGallery);
 optionFiles.addEventListener('click', openFileSelector);
 
-// Botões de adição no mapa detalhado
 btnAddZeroPoint.addEventListener('click', () => {
     activateAddingMode('zero');
 });
@@ -772,21 +905,17 @@ btnAddCommonPoint.addEventListener('click', () => {
 
 cancelAddMode.addEventListener('click', deactivateAddingMode);
 
-// Input de arquivos
 fileInput.addEventListener('change', handleImageSelection);
 imageInput.addEventListener('change', handleImageSelection);
 
-// Upload de foto para achados
 pointPhoto.addEventListener('change', handlePhotoUpload);
 
-// Sistema de tags
 pointTags.querySelectorAll('.tag').forEach(tag => {
     tag.addEventListener('click', () => {
         tag.classList.toggle('selected');
     });
 });
 
-// Navegação por abas
 tabs.forEach(tab => {
     tab.addEventListener('click', () => {
         setActiveTab(tab);
@@ -801,18 +930,18 @@ tabs.forEach(tab => {
     });
 });
 
-// Ferramentas do mapa detalhado
 document.getElementById('btnGridToggle').addEventListener('click', toggleGrid);
 document.getElementById('btnExport').addEventListener('click', exportData);
 
 // Inicialização
+window.addEventListener('beforeunload', saveCurrentMapState); 
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Aplicação inicializada');
-    showNotification('Bem-vindo ao Mapa Colaborativo!');
+    loadCurrentMapFromStorage(); // Tenta carregar o mapa ao iniciar a tela.
     updateLastUpdateTime();
 });
 
-// Prevenir comportamento padrão de gestos
 document.addEventListener('touchmove', function(e) {
     if (e.scale !== 1) {
         e.preventDefault();
