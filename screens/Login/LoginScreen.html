@@ -37,6 +37,12 @@
                     <div class="form-group">
                         <label for="password">Senha</label>
                         <input type="password" id="password" name="password" placeholder="Sua senha" required>
+                        
+                        <div style="text-align: right; margin-top: 8px;">
+                            <a href="#" onclick="recuperarSenha()" style="font-size: 14px; color: var(--primary-color); text-decoration: none; font-weight: 500;">
+                                Esqueci minha senha
+                            </a>
+                        </div>
                     </div>
 
                     <button type="submit" class="login-btn" id="loginBtn">
@@ -67,6 +73,7 @@
             setTimeout(() => { notification.style.display = 'none'; }, 3000);
         }
 
+        // Função de Login
         function handleLogin(event) {
             event.preventDefault();
             
@@ -92,12 +99,11 @@
                             const userData = snapshot.val();
                             
                             if (userData) {
-                                // Atualiza dados locais
+                                // Atualiza dados locais e notifica
                                 localStorage.setItem('user', JSON.stringify(userData));
-                                
                                 showNotification('Login realizado com sucesso!');
                                 
-                                // REDIRECIONAMENTO INTELIGENTE
+                                // Redirecionamento baseado no tipo
                                 setTimeout(() => {
                                     if (userData.type === 'arqueologo') {
                                         window.location.href = '../GaleriaArqueologos/GaleriaArqueologosScreen.html';
@@ -107,7 +113,7 @@
                                 }, 1000);
                             } else {
                                 // Caso de erro (usuário sem registro no DB)
-                                showNotification('Erro no perfil do usuário.', 'error');
+                                showNotification('Erro: Usuário sem perfil cadastrado.', 'error');
                                 loginBtn.disabled = false;
                                 loginBtn.innerHTML = '<span>Entrar</span>';
                             }
@@ -115,9 +121,40 @@
                 })
                 .catch((error) => {
                     console.error(error);
-                    showNotification('E-mail ou senha incorretos.', 'error');
+                    let msg = 'E-mail ou senha incorretos.';
+                    if (error.code === 'auth/user-not-found') msg = 'Usuário não encontrado.';
+                    if (error.code === 'auth/wrong-password') msg = 'Senha incorreta.';
+                    
+                    showNotification(msg, 'error');
                     loginBtn.disabled = false;
                     loginBtn.innerHTML = '<span>Entrar</span>';
+                });
+        }
+
+        // NOVA FUNÇÃO: Recuperar Senha
+        function recuperarSenha() {
+            const email = document.getElementById('email').value.trim();
+            
+            // Valida se o campo de e-mail está preenchido
+            if (!email) {
+                showNotification("Digite seu e-mail no campo acima para recuperar a senha.", "error");
+                document.getElementById('email').focus();
+                return;
+            }
+
+            // Confirmação simples
+            if(!confirm(`Enviar link de redefinição de senha para: ${email}?`)) return;
+
+            // Envia e-mail pelo Firebase
+            auth.sendPasswordResetEmail(email)
+                .then(() => {
+                    showNotification("E-mail enviado! Verifique sua caixa de entrada.");
+                })
+                .catch((error) => {
+                    let msg = error.message;
+                    if (error.code === 'auth/user-not-found') msg = "Este e-mail não está cadastrado.";
+                    if (error.code === 'auth/invalid-email') msg = "Formato de e-mail inválido.";
+                    showNotification("Erro: " + msg, "error");
                 });
         }
 

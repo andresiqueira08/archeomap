@@ -1,5 +1,11 @@
 // archeomap-master/screens/Colaboracao/js/app.js
 
+// --- VARIÁVEIS DE PERMISSÃO ---
+// Recupera o usuário salvo no login para saber se é 'arqueologo' ou 'publico'
+const localUser = JSON.parse(localStorage.getItem('user'));
+const userType = localUser ? localUser.type : 'publico'; // Padrão é publico se der erro
+const isArqueologo = userType === 'arqueologo';
+
 // Recupera ID do mapa vindo da Galeria
 const currentMapId = localStorage.getItem('currentMapId');
 
@@ -12,7 +18,6 @@ const totalFindings = document.getElementById('totalFindings');
 const zeroPoints = document.getElementById('zeroPoints');
 const lastUpdate = document.getElementById('lastUpdate');
 const artifactsGrid = document.getElementById('artifactsGrid');
-const tabs = document.querySelectorAll('.tab');
 
 // Elementos da tela do mapa detalhado (Canvas)
 const mainScreen = document.querySelector('.main-screen');
@@ -32,7 +37,7 @@ const btnAddCommonPoint = document.getElementById('btnAddCommonPoint');
 const pointDetailsModal = document.getElementById('pointDetailsModal');
 const closePointDetailsModal = document.getElementById('closePointDetailsModal');
 
-// Elementos de detalhes do ponto
+// Elementos de detalhes do ponto (Inputs)
 const pointName = document.getElementById('pointName');
 const pointDescription = document.getElementById('pointDescription');
 const pointCategory = document.getElementById('pointCategory');
@@ -42,11 +47,13 @@ const pointMaterial = document.getElementById('pointMaterial');
 const pointCoordinates = document.getElementById('pointCoordinates');
 const pointDiscoveryDate = document.getElementById('pointDiscoveryDate');
 const pointTags = document.getElementById('pointTags');
+
+// Botões de Ação do Modal
 const savePointDetails = document.getElementById('savePointDetails');
 const btnDeletePoint = document.getElementById('btnDeletePoint');
 
 // Estado da aplicação
-let mapPoints = []; // Agora sincronizado com Firebase
+let mapPoints = []; // Sincronizado com Firebase
 let isMapLoaded = false;
 let currentMapImage = null;
 let canvasContext = null;
@@ -54,16 +61,34 @@ let isGridVisible = true;
 let addingPointMode = null;
 let editingPointId = null;
 
-// Inicialização
+// --- INICIALIZAÇÃO ---
 document.addEventListener('DOMContentLoaded', () => {
     if (!currentMapId) {
         alert("Erro: Nenhum mapa selecionado.");
         window.history.back();
         return;
     }
+    
+    // Configuração inicial de interface baseada no tipo de usuário
+    aplicarPermissoesDeUsuario();
+
     carregarMapaFirebase();
     iniciarOuvintesFirebase();
 });
+
+// Função para esconder ferramentas de edição se for público
+function aplicarPermissoesDeUsuario() {
+    if (!isArqueologo) {
+        // Esconde botões de adicionar pontos na tela detalhada
+        if(btnAddZeroPoint) btnAddZeroPoint.style.display = 'none';
+        if(btnAddCommonPoint) btnAddCommonPoint.style.display = 'none';
+        
+        // Remove indicadores de modo de adição se existirem
+        if(addingModeIndicator) addingModeIndicator.remove();
+        
+        console.log("Modo Espectador Ativado: Usuário Público");
+    }
+}
 
 function showNotification(message, type = 'success') {
     notification.textContent = message;
@@ -90,14 +115,11 @@ function carregarMapaFirebase() {
 function iniciarOuvintesFirebase() {
     const pointsRef = database.ref(`maps/${currentMapId}/pointsData`);
     
-    // O evento 'value' traz TODOS os pontos sempre que algo muda.
-    // Para simplificar a sincronia do array local, usaremos ele.
     pointsRef.on('value', (snapshot) => {
         const data = snapshot.val();
         mapPoints = [];
         
         if (data) {
-            // Converte objeto do Firebase para array
             Object.keys(data).forEach(key => {
                 mapPoints.push({
                     id: key,
@@ -124,7 +146,6 @@ function loadMapVisuals(imageSrc) {
 }
 
 function atualizarInterfaceGlobal() {
-    // 1. Limpa contêineres
     interactiveMap.innerHTML = ''; 
     artifactsGrid.innerHTML = '';
     detailedMapPoints.innerHTML = '';
@@ -132,25 +153,18 @@ function atualizarInterfaceGlobal() {
     let findingsCount = 0;
     let zeroPointsCount = 0;
 
-    // 2. Re-renderiza tudo baseado no novo array mapPoints
     mapPoints.forEach(point => {
-        // Contadores
         if (point.type === 'zero') zeroPointsCount++;
         else findingsCount++;
 
-        // Renderiza no Mapa Principal (Pequeno)
         renderPointOnMainMap(point);
-
-        // Renderiza na Lista (Grid)
         addArtifactToGrid(point);
 
-        // Renderiza no Mapa Detalhado (Se estiver aberto)
         if (mapDetailScreen.classList.contains('active')) {
             renderDetailedPoint(point);
         }
     });
 
-    // 3. Atualiza métricas
     totalFindings.textContent = findingsCount;
     zeroPoints.textContent = zeroPointsCount;
     lastUpdate.textContent = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
@@ -162,8 +176,6 @@ function renderPointOnMainMap(point) {
     el.style.left = `${point.x}%`;
     el.style.top = `${point.y}%`;
     el.innerHTML = point.type === 'zero' ? '⭐' : '💜';
-    
-    // Tooltip simples
     el.setAttribute('title', point.details.name);
     
     el.addEventListener('click', (e) => {
@@ -221,10 +233,9 @@ function initializeDetailedMap() {
     detailedMapCanvas.width = container.clientWidth;
     detailedMapCanvas.height = container.clientHeight;
     
-    drawDetailedMap(); // Desenha imagem
+    drawDetailedMap();
     if (isGridVisible) drawGrid();
     
-    // Re-renderiza pontos no container absoluto sobre o canvas
     detailedMapPoints.innerHTML = '';
     mapPoints.forEach(renderDetailedPoint);
 }
@@ -234,7 +245,6 @@ function drawDetailedMap() {
     if (currentMapImage) {
         const img = new Image();
         img.onload = function() {
-            // Centraliza e ajusta imagem (Cover/Contain lógica simples)
             const scale = Math.min(detailedMapCanvas.width / img.width, detailedMapCanvas.height / img.height);
             const w = img.width * scale;
             const h = img.height * scale;
@@ -249,8 +259,6 @@ function drawDetailedMap() {
 function renderDetailedPoint(point) {
     const el = document.createElement('div');
     el.className = `detailed-point ${point.type}-point`;
-    
-    // Converte % para PX relativo ao tamanho do canvas atual
     const px = (point.x / 100) * detailedMapCanvas.width;
     const py = (point.y / 100) * detailedMapCanvas.height;
     
@@ -265,9 +273,15 @@ function renderDetailedPoint(point) {
     detailedMapPoints.appendChild(el);
 }
 
-// --- ADIÇÃO DE PONTOS (LÓGICA RESTAURADA) ---
+// --- ADIÇÃO DE PONTOS ---
 
 function activateAddingMode(type) {
+    // BLOQUEIO DE SEGURANÇA EXTRA
+    if (!isArqueologo) {
+        showNotification("Apenas arqueólogos podem adicionar pontos.", "error");
+        return;
+    }
+
     addingPointMode = type;
     detailedMapCanvas.style.cursor = 'crosshair';
     addingModeIndicator.style.display = 'flex';
@@ -278,17 +292,17 @@ function activateAddingMode(type) {
 function deactivateAddingMode() {
     addingPointMode = null;
     detailedMapCanvas.style.cursor = 'default';
-    addingModeIndicator.style.display = 'none';
+    if(addingModeIndicator) addingModeIndicator.style.display = 'none';
 }
 
 detailedMapCanvas.addEventListener('click', (event) => {
-    if (!addingPointMode) return;
+    // Se não for arqueólogo ou não estiver em modo de adição, ignora
+    if (!addingPointMode || !isArqueologo) return;
     
     const rect = detailedMapCanvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     
-    // Calcula % para salvar no banco
     const relX = (x / detailedMapCanvas.width) * 100;
     const relY = (y / detailedMapCanvas.height) * 100;
     
@@ -298,7 +312,6 @@ detailedMapCanvas.addEventListener('click', (event) => {
             salvarPontoNoFirebase(relX, relY, 'zero', { altitude: altura, name: 'Ponto Zero' });
         }
     } else {
-        // Cria ponto comum e abre modal de edição depois (opcional, aqui cria direto)
         salvarPontoNoFirebase(relX, relY, 'common', { 
             name: `Achado #${mapPoints.length + 1}`,
             state: 'identificado'
@@ -309,6 +322,8 @@ detailedMapCanvas.addEventListener('click', (event) => {
 });
 
 function salvarPontoNoFirebase(x, y, type, extraDetails) {
+    if (!isArqueologo) return; // Bloqueio final
+
     const novoPonto = {
         x: x, 
         y: y, 
@@ -321,7 +336,7 @@ function salvarPontoNoFirebase(x, y, type, extraDetails) {
             discoveryDate: new Date().toISOString().split('T')[0],
             ...extraDetails
         },
-        createdBy: JSON.parse(localStorage.getItem('user'))?.email || 'anon'
+        createdBy: localUser ? localUser.email : 'anon'
     };
     
     database.ref(`maps/${currentMapId}/pointsData`).push(novoPonto)
@@ -329,7 +344,7 @@ function salvarPontoNoFirebase(x, y, type, extraDetails) {
         .catch(err => alert("Erro ao salvar: " + err.message));
 }
 
-// --- EDIÇÃO (MODAL) ---
+// --- EDIÇÃO (MODAL COM PERMISSÕES) ---
 
 function abrirModalEdicao(point) {
     editingPointId = point.id;
@@ -338,37 +353,59 @@ function abrirModalEdicao(point) {
     pointName.value = point.details.name || '';
     pointDescription.value = point.details.description || '';
     pointCategory.value = point.details.category || '';
-    pointEra.value = point.details.era || '';
-    pointState.value = point.details.state || '';
-    pointMaterial.value = point.details.material || '';
-    pointCoordinates.textContent = `X: ${Math.round(point.x)}, Y: ${Math.round(point.y)}`;
-    pointDiscoveryDate.value = point.details.discoveryDate || '';
+    if(pointEra) pointEra.value = point.details.era || '';
+    if(pointState) pointState.value = point.details.state || '';
+    if(pointMaterial) pointMaterial.value = point.details.material || '';
+    if(pointCoordinates) pointCoordinates.textContent = `X: ${Math.round(point.x)}, Y: ${Math.round(point.y)}`;
+    if(pointDiscoveryDate) pointDiscoveryDate.value = point.details.discoveryDate || '';
 
     // Tags
-    document.querySelectorAll('.tag').forEach(tag => {
-        tag.classList.remove('selected');
-        if (point.details.tags && point.details.tags.includes(tag.getAttribute('data-value'))) {
-            tag.classList.add('selected');
-        }
-    });
+    if(pointTags) {
+        document.querySelectorAll('.tag').forEach(tag => {
+            tag.classList.remove('selected');
+            if (point.details.tags && point.details.tags.includes(tag.getAttribute('data-value'))) {
+                tag.classList.add('selected');
+            }
+        });
+    }
+
+    // --- LÓGICA DE PERMISSÃO NO MODAL ---
+    const inputs = pointDetailsModal.querySelectorAll('input, select, textarea');
+    
+    if (isArqueologo) {
+        // Se for Arqueólogo: TUDO LIBERADO
+        inputs.forEach(input => input.disabled = false);
+        savePointDetails.style.display = 'block';
+        btnDeletePoint.style.display = 'block';
+        if(pointTags) pointTags.style.pointerEvents = 'auto'; // Habilita cliques nas tags
+    } else {
+        // Se for Público: SOMENTE LEITURA
+        inputs.forEach(input => input.disabled = true);
+        savePointDetails.style.display = 'none';
+        btnDeletePoint.style.display = 'none';
+        if(pointTags) pointTags.style.pointerEvents = 'none'; // Desabilita cliques nas tags
+    }
 
     pointDetailsModal.style.display = 'flex';
 }
 
+// Botão Salvar (Só funciona se o botão estiver visível/clicável, mas adicionamos check extra)
 savePointDetails.addEventListener('click', () => {
-    if (!editingPointId) return;
+    if (!editingPointId || !isArqueologo) return;
     
     const selectedTags = [];
-    document.querySelectorAll('.tag.selected').forEach(t => selectedTags.push(t.getAttribute('data-value')));
+    if(pointTags) {
+        document.querySelectorAll('.tag.selected').forEach(t => selectedTags.push(t.getAttribute('data-value')));
+    }
 
     const updates = {
         name: pointName.value,
         description: pointDescription.value,
         category: pointCategory.value,
-        era: pointEra.value,
-        state: pointState.value,
-        material: pointMaterial.value,
-        discoveryDate: pointDiscoveryDate.value,
+        era: pointEra ? pointEra.value : '',
+        state: pointState ? pointState.value : '',
+        material: pointMaterial ? pointMaterial.value : '',
+        discoveryDate: pointDiscoveryDate ? pointDiscoveryDate.value : '',
         tags: selectedTags
     };
     
@@ -379,8 +416,10 @@ savePointDetails.addEventListener('click', () => {
         });
 });
 
+// Botão Excluir
 btnDeletePoint.addEventListener('click', () => {
-    if (!editingPointId) return;
+    if (!editingPointId || !isArqueologo) return;
+    
     if (confirm("Apagar este ponto permanentemente?")) {
         database.ref(`maps/${currentMapId}/pointsData/${editingPointId}`).remove()
             .then(() => {
@@ -394,9 +433,7 @@ btnDeletePoint.addEventListener('click', () => {
 
 // Grade
 function drawGrid() {
-    const gridSize = 50;
     mapGrid.innerHTML = '';
-    // Lógica simplificada de grade visual
     for (let i = 50; i < detailedMapCanvas.width; i += 50) {
         const line = document.createElement('div');
         line.className = 'grid-line vertical';
@@ -410,18 +447,23 @@ function drawGrid() {
         mapGrid.appendChild(line);
     }
 }
+
 document.getElementById('btnGridToggle').addEventListener('click', () => {
     isGridVisible = !isGridVisible;
     mapGrid.style.display = isGridVisible ? 'block' : 'none';
 });
 
 // Tags selection
-pointTags.querySelectorAll('.tag').forEach(tag => {
-    tag.addEventListener('click', () => tag.classList.toggle('selected'));
-});
+if(pointTags) {
+    pointTags.querySelectorAll('.tag').forEach(tag => {
+        tag.addEventListener('click', () => {
+            if(isArqueologo) tag.classList.toggle('selected');
+        });
+    });
+}
 
-// Botões de ação
-btnAddZeroPoint.addEventListener('click', () => activateAddingMode('zero'));
-btnAddCommonPoint.addEventListener('click', () => activateAddingMode('common'));
-cancelAddMode.addEventListener('click', deactivateAddingMode);
+// Botões de ação (Eventos)
+if(btnAddZeroPoint) btnAddZeroPoint.addEventListener('click', () => activateAddingMode('zero'));
+if(btnAddCommonPoint) btnAddCommonPoint.addEventListener('click', () => activateAddingMode('common'));
+if(cancelAddMode) cancelAddMode.addEventListener('click', deactivateAddingMode);
 closePointDetailsModal.addEventListener('click', () => pointDetailsModal.style.display = 'none');
