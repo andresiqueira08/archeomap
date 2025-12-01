@@ -79,6 +79,24 @@ https://trello.com/invite/b/690c84ee5613cbbddf11c46a/ATTI05d4c6dd2e427e012300288
 
 As funcionalidades principais estão sendo implementadas e testadas junto ao protótipo do robô de escaneamento. O objetivo é validar o mapeamento em campo e o fluxo de marcação dos artefatos.
 
+📸 Screenshots do projeto
+Tela inicial
+
+<img width="289" height="446" alt="Tela inicial" src="https://github.com/user-attachments/assets/93387da5-354a-4285-afc5-8abca95eee78" />
+Tela de cadastro
+
+<img width="244" height="442" alt="Tela de cadastro" src="https://github.com/user-attachments/assets/593da9d9-050e-4fa2-a2f5-b22eed07ac54" />
+Home Page
+
+<img width="284" height="449" alt="Home Page" src="https://github.com/user-attachments/assets/b0fb6a0f-4437-494d-a093-0cb0c1ffe61c" />
+Tela do mapa e suas informações
+
+<img width="246" height="446" alt="Mapa e informações" src="https://github.com/user-attachments/assets/9d15ee2e-9b3a-4237-9af2-9e53fd85461a" />
+Tela das funcionalidades
+
+<img width="954" height="449" alt="Funcionalidades do mapa" src="https://github.com/user-attachments/assets/8bec896d-39b6-4886-8c5a-fe3c65336293" />
+
+
 ---
 
 ## 🔧 Instalação e Configuração do Ambiente
@@ -157,19 +175,3 @@ Copiar código
 │── css/
 │── js/
 └── assets/
-📸 Screenshots do projeto
-Tela inicial
-
-<img width="289" height="446" alt="Tela inicial" src="https://github.com/user-attachments/assets/93387da5-354a-4285-afc5-8abca95eee78" />
-Tela de cadastro
-
-<img width="244" height="442" alt="Tela de cadastro" src="https://github.com/user-attachments/assets/593da9d9-050e-4fa2-a2f5-b22eed07ac54" />
-Home Page
-
-<img width="284" height="449" alt="Home Page" src="https://github.com/user-attachments/assets/b0fb6a0f-4437-494d-a093-0cb0c1ffe61c" />
-Tela do mapa e suas informações
-
-<img width="246" height="446" alt="Mapa e informações" src="https://github.com/user-attachments/assets/9d15ee2e-9b3a-4237-9af2-9e53fd85461a" />
-Tela das funcionalidades
-
-<img width="954" height="449" alt="Funcionalidades do mapa" src="https://github.com/user-attachments/assets/8bec896d-39b6-4886-8c5a-fe3c65336293" />
