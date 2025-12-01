@@ -163,3 +163,22 @@ Copiar código
 │── css/
 │── js/
 └── assets/
+
+
+Screenshots do projeto
+
+
+Tela inicial: <img width="289" height="446" alt="image" src="https://github.com/user-attachments/assets/93387da5-354a-4285-afc5-8abca95eee78" /> <br>
+
+Tela de cadastro: <img width="244" height="442" alt="image" src="https://github.com/user-attachments/assets/593da9d9-050e-4fa2-a2f5-b22eed07ac54" /> <br>
+
+Home page: <img width="284" height="449" alt="image" src="https://github.com/user-attachments/assets/b0fb6a0f-4437-494d-a093-0cb0c1ffe61c" /> <br>
+
+Tela do mapas e suas informações: <img width="246" height="446" alt="image" src="https://github.com/user-attachments/assets/9d15ee2e-9b3a-4237-9af2-9e53fd85461a" /> <br>
+
+Tela das funcionalidades do mapa: <img width="954" height="449" alt="image" src="https://github.com/user-attachments/assets/8bec896d-39b6-4886-8c5a-fe3c65336293" /> <br>
+
+
+
+
+
