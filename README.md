@@ -165,7 +165,7 @@ Copiar código
 └── assets/
 
 
-Screenshots do projeto
+## Screenshots do projeto
 
 
 Tela inicial: <img width="289" height="446" alt="image" src="https://github.com/user-attachments/assets/93387da5-354a-4285-afc5-8abca95eee78" /> <br>
