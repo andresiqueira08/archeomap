@@ -3,7 +3,7 @@ O ArchaeoMap é um sistema completo de apoio a escavações arqueológicas, unin
  O objetivo é digitalizar o processo de exploração de campo, reduzindo erros, acelerando análises e permitindo que equipes trabalhem com precisão e organização desde o primeiro minuto de escavação.
 
 🚀 Principais Funcionalidades <br>
-🗺️ 1. Mapeamento Interativo de Sítios Arqueológicos
+🗺️ 1. Mapeamento Interativo de Sítios Arqueológicos <br>
 Identificação automática do ponto zero (referência do terreno).
 
 
@@ -35,8 +35,8 @@ Opção de baixar a imagem do ponto marcado diretamente no app.
 
 
 
-🏠 2. Página Inicial
-Interface intuitiva com as seções principais:
+🏠 2. Página Inicial <br>
+Interface intuitiva com as seções principais: <br>
 Acesso ao mapa interativo
 
 
@@ -50,8 +50,8 @@ Login / Logout
 
 
 
-🧰 3. Gestão de Equipamentos
-Listagem completa dos equipamentos utilizados na escavação:
+🧰 3. Gestão de Equipamentos <br>
+Listagem completa dos equipamentos utilizados na escavação: <br>
 Nome do item
 
 
@@ -65,7 +65,7 @@ Histórico de movimentação (em desenvolvimento)
 
 
 
-🔐 4. Sistema de Login e Permissões
+🔐 4. Sistema de Login e Permissões <br>
 Autenticação por usuário + senha (com JWT / OAuth 2.0).
 
 
@@ -85,8 +85,8 @@ Sessões seguras com expiração configurável.
 
 
 
-🏺 5. Listagem Pública de Artefatos
-Página aberta onde o público pode visualizar artefatos já catalogados.
+🏺 5. Listagem Pública de Artefatos <br>
+Página aberta onde o público pode visualizar artefatos já catalogados. <br>
 Inclui:
 Imagens reais do achado
 
