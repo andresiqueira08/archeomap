@@ -1,19 +1,17 @@
 🏺 ArchaeoMap – Sistema de Mapeamento de Sítios Arqueológicos
-
-O ArchaeoMap é um sistema inovador que combina geolocalização, mapeamento digital, robótica competitiva e arqueologia, permitindo que equipes de campo realizem marcações em tempo real, registrem artefatos e acompanhem dados organizados e acessíveis de forma intuitiva.
-
-O objetivo principal é agilizar o trabalho arqueológico, reduzir erros no processo de mapeamento e integrar técnicas modernas como LIDAR, sensores inteligentes e visão computacional.
-
+O ArchaeoMap é um sistema completo de apoio a escavações arqueológicas, unindo robótica competitiva, geolocalização, visão computacional e automação.
+O objetivo é digitalizar o processo de exploração de campo, reduzindo erros, acelerando análises e permitindo que equipes trabalhem com precisão e organização desde o primeiro minuto de escavação.
+ 
+ 
 🚀 Principais Funcionalidades
-🗺️ 1. Sistema de Mapeamento Interativo
+🗺️ 1. Mapeamento Interativo de Sítios Arqueológicos
+Identificação automática do ponto zero (referência do terreno).
 
-Identificação automática do ponto zero (maior elevação).
+Mapeamento contínuo conforme o arqueólogo ou robô se desloca.
 
-Mapeamento contínuo conforme o robô ou arqueólogo se desloca.
+Inserção de marcadores no local dos achados.
 
-Registro de coordenadas ao encontrar um artefato.
-
-Geração automática de cartões contendo:
+Geração automática de cartões de identificação, contendo:
 
 Nome do artefato
 
@@ -25,110 +23,170 @@ Data e hora
 
 Imagem do local
 
-Possibilidade de baixar o mapa ou a imagem da marcação diretamente pelo aplicativo.
+Opção de baixar a imagem do ponto marcado diretamente no app.
 
+ 
+ 
 🏠 2. Página Inicial
+Interface intuitiva com as seções principais:
+Acesso ao mapa interativo
 
-Interface simples e intuitiva, com acesso rápido às principais ferramentas:
-
-Mapa de escavação
-
-Lista de equipamentos
+Listagem de equipamentos
 
 Artefatos descobertos
 
-Login/Logout
+Login / Logout
 
-🧰 3. Listagem de Equipamentos
-
-Controle centralizado dos equipamentos utilizados no campo:
-
-Nome do equipamento
+ 
+ 
+🧰 3. Gestão de Equipamentos
+Listagem completa dos equipamentos utilizados na escavação:
+Nome do item
 
 Estado (disponível, em uso, manutenção)
 
-Responsável atual
+Responsável no momento
 
+Histórico de movimentação (em desenvolvimento)
+
+ 
+ 
 🔐 4. Sistema de Login e Permissões
+Autenticação por usuário + senha (com JWT / OAuth 2.0).
 
-Acesso exclusivo para arqueólogos autorizados.
+Controle de permissões:
 
-Autenticação via usuário + senha (Firebase Auth).
+Arqueólogos → acesso total à operação do mapa e marcações.
 
-Redirecionamento automático para o Painel do Arqueólogo.
+Público geral → acesso somente à listagem de artefatos publicados.
 
-Permissões:
+Redirecionamento automático após login.
 
-Arqueólogos: acesso total ao mapa e às marcações
+Sessões seguras com expiração configurável.
 
-Público geral: visualização apenas de artefatos publicados
-
+ 
+ 
 🏺 5. Listagem Pública de Artefatos
+Página aberta onde o público pode visualizar artefatos já catalogados.
+Inclui:
+Imagens reais do achado
 
-Página aberta ao público com:
+Descrição técnica
 
-Imagens
-
-Descrição curta
-
-Localização aproximada (para proteção do sítio)
+Localização aproximada (protegida por privacy layer)
 
 Status da pesquisa
 
+Possibilidade futura de filtro por período histórico
+
+ 
+ 
 🧭 Metodologia – SCRUM
-
-O desenvolvimento segue o framework Scrum, garantindo entregas iterativas e alinhamento com as necessidades do campo arqueológico.
-
+O ArchaeoMap é desenvolvido seguindo Scrum, garantindo melhoria contínua e releases frequentes.
 Papéis
-
 Product Owner: André Siqueira
 
 Scrum Master: Guilherme Marques
 
-Equipe de Desenvolvimento
-
+Equipe de Desenvolvimento:
 Miguel Boa Viagem
-
 Bruno Ferreira
-
 José Clayton
-
 João Gabriel Coutinho
-
 Rafael
 
-Quadro no Trello
+Planejamento & Organização
+📌 Trello do projeto:
+<a href="https://trello.com/invite/b/690c84ee5613cbbddf11c46a/ATTI05d4c6dd2e427e012300288210981de2B7EA257A/como-ajudar-os-arqueologos-no-dia-a-dia%22 target="_blank">Clique para acessar</a>
+ 
+ 
+🧪 Status Atual
+🚧 Em Desenvolvimento
+As funcionalidades principais estão sendo implementadas e testadas junto ao protótipo do robô de escaneamento.
+O objetivo é validar o mapeamento em campo e o fluxo de marcação dos artefatos.
+ 
+ 
+🔧 Instalação e Configuração do Ambiente (CONTRIBUTING.md integrado)
+Esta seção é essencial para qualquer pessoa que queira rodar o projeto localmente ou contribuir.
+ 
+ 
+📦 1. Pré-requisitos
+Você deve ter instalado:
+Git
 
-<a href="https://trello.com/invite/b/690c84ee5613cbbddf11c46a/ATTI05d4c6dd2e427e012300288210981de2B7EA257A/como-ajudar-os-arqueologos-no-dia-a-dia" target="_blank">Acessar quadro do Trello</a>
+Node.js (v18+)
 
-🧪 Status do Projeto
+NPM ou Yarn
 
-🚧 Em desenvolvimento
+Navegador moderno (Chrome, Edge, Firefox)
 
-As funcionalidades principais estão em implementação e integração com protótipos de robôs de escaneamento, permitindo testes em campo para validação da precisão do mapa e do posicionamento dos artefatos.
+ 
+ 
+📥 2. Clonando o repositório
+git clone https://github.com/<seu-usuario>/<seu-repositorio>.git
+cd <seu-repositorio>
+ 
+ 
+ 
+⚙️ 3. Instalando dependências
+npm install
+ 
+Se usar yarn:
+yarn
+ 
+ 
+ 
+▶️ 4. Rodando o projeto
+Com Live Server (VS Code):
+Clique com botão direito no index.html
 
-🛠️ Tecnologias Utilizadas
-Tecnologia	Uso
-HTML5	Estruturação das páginas e componentes.
-CSS3	Estilização, responsividade e identidade visual do sistema.
-JavaScript (ES6+)	Lógica do sistema, integração do mapa, regras de negócio.
-Firebase	Autenticação, banco de dados em nuvem e persistência dos dados.
-📦 Como Executar o Projeto
+Selecione Open with Live Server
 
-Clone este repositório:
+Ou via terminal:
+npx http-server .
+ 
+O sistema abrirá em:
+http://localhost:8080
+ 
+ 
+ 
+🤝 Como Contribuir
+Quer ajudar o ArchaeoMap a evoluir? Siga estas regras simples.
+ 
+ 
+1. Crie uma nova branch
+git checkout -b feature/nome-da-feature
+ 
+ 
+ 
+2. Faça seus commits de forma clara
+Padrão recomendado:
+feat: adiciona novo sistema de marcadores
+fix: corrige erro no login
+refactor: melhora a organização do código
+ 
+ 
+ 
+3. Submeta sua alteração
+git push origin feature/nome-da-feature
+ 
+Abra um Pull Request e descreva:
+O que foi feito
 
-git clone https://github.com/seu-repositorio/archaeomap.git
+Como testar
 
 
-Abra o projeto em seu editor.
 
-Configure o Firebase no arquivo /js/firebaseConfig.js.
-
-Inicie o servidor local (extensões como Live Server são recomendadas).
-
-Acesse http://localhost:5500 (ou porta equivalente).
-
-🤝 Contribuições
-
-Contribuições são bem-vindas!
-Antes de contribuir, leia o arquivo CONTRIBUTING.md para seguir as boas práticas do projeto.
+ 
+ 
+📁 Estrutura do Projeto
+/archeomap
+│── index.html
+│── screens/
+│   ├── Login/LoginScreen.html
+│   ├── Mapa/MapScreen.html
+│   ├── Equipamentos/EquipamentosScreen.html
+│   └── Publico/ArtefatosPublicos.html
+│── css/
+│── js/
+└── assets/
