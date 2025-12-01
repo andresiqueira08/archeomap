@@ -2,7 +2,7 @@
 O ArchaeoMap é um sistema completo de apoio a escavações arqueológicas, unindo robótica competitiva, geolocalização, visão computacional e automação.
  O objetivo é digitalizar o processo de exploração de campo, reduzindo erros, acelerando análises e permitindo que equipes trabalhem com precisão e organização desde o primeiro minuto de escavação.
 
-🚀 Principais Funcionalidades
+🚀 Principais Funcionalidades <br>
 🗺️ 1. Mapeamento Interativo de Sítios Arqueológicos
 Identificação automática do ponto zero (referência do terreno).
 
