@@ -215,3 +215,32 @@ Screenshots (se houver interface)
 │── js/
 └── assets/
 
+
+Tela de login: 
+
+<img width="602" height="852" alt="image" src="https://github.com/user-attachments/assets/3a964d86-6f20-48c1-bba0-9b0ea69f5b2a" />
+
+Tela de cadastro: 
+
+<img width="480" height="862" alt="image" src="https://github.com/user-attachments/assets/445270f3-3f36-4c7b-b33e-9f84cfaa8122" /> <br>
+Se o usuário for um arqueólogo ele deve usar um código especifico para cadastro. <br>
+
+Tela inicial:
+
+<img width="482" height="858" alt="image" src="https://github.com/user-attachments/assets/838a6d65-262c-4d3d-8d21-fa3313651a6d" /> <br>
+Aqui o usuário ver os mapas catalogados no sistema. <br>
+
+Tela do trabalho:
+
+<img width="403" height="857" alt="image" src="https://github.com/user-attachments/assets/cd0cca08-e18e-4cb7-8945-cf7984ec524c" /> <br>
+O usuário visualiza o mapa, o ponto zero e os artefatos marcados no mapa.
+
+Mapa:
+
+<img width="1907" height="857" alt="image" src="https://github.com/user-attachments/assets/1e265e41-a04d-4175-8704-6881850a7a3e" /> <br>
+O usuário, se for arqueologo, pode visualizar o mapa e interagir com os dois botões acima, marcando novos artefatos e o ponto zero. Já um usuário público, apenas visualiza.
+
+
+
+
+
