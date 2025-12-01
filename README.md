@@ -1,145 +1,131 @@
-🏺 ArchaeoMap – Sistema de Mapeamento de Sítios Arqueológicos
+# 🏺 ArchaeoMap – Sistema de Mapeamento de Sítios Arqueológicos
 
-O ArchaeoMap é um sistema completo de apoio a escavações arqueológicas, unindo robótica competitiva, geolocalização, visão computacional e automação.
+O **ArchaeoMap** é um sistema completo de apoio a escavações arqueológicas, unindo robótica competitiva, geolocalização, visão computacional e automação.  
 O objetivo é digitalizar o processo de exploração de campo, reduzindo erros, acelerando análises e permitindo que equipes trabalhem com precisão desde o primeiro minuto de escavação.
 
-🚀 Principais Funcionalidades
-🗺️ 1. Mapeamento Interativo de Sítios Arqueológicos
+---
 
-Identificação automática do ponto zero (referência do terreno)
+## 🚀 Principais Funcionalidades
 
-Mapeamento contínuo conforme o arqueólogo ou robô se desloca
+### 🗺️ Mapeamento Interativo de Sítios Arqueológicos
+- Identificação automática do ponto zero (referência do terreno).
+- Mapeamento contínuo conforme o arqueólogo ou robô se desloca.
+- Inserção de marcadores no local dos achados.
+- Geração automática de cartões contendo:
+  - Nome do artefato
+  - Descrição
+  - Coordenadas
+  - Data e hora
+  - Imagem do local
+- Download da imagem do ponto marcado diretamente no app.
 
-Inserção de marcadores no local dos achados
+---
 
-Geração automática de cartões contendo:
-
-Nome do artefato
-
-Descrição
-
-Coordenadas
-
-Data e hora
-
-Imagem
-
-Download da imagem do ponto marcado
-
-🏠 2. Página Inicial
-
+### 🏠 Página Inicial
 Interface intuitiva com:
+- Acesso ao mapa interativo.
+- Lista de equipamentos.
+- Artefatos descobertos.
+- Login / Logout.
 
-Acesso ao mapa interativo
+---
 
-Lista de equipamentos
+### 🧰 Gestão de Equipamentos
+- Listagem de equipamentos utilizados.
+- Estado (disponível, em uso, manutenção).
+- Responsável atual.
+- Histórico de movimentação *(em desenvolvimento)*.
 
-Artefatos descobertos
+---
 
-Login / Logout
+### 🔐 Sistema de Login e Permissões
+- Autenticação por usuário + senha (JWT / OAuth 2.0).
+- Controle de permissões:
+  - **Arqueólogos** → acesso total ao mapa e marcações.
+  - **Público geral** → apenas visualização.
+- Redirecionamento automático após login.
+- Sessões seguras com expiração configurável.
 
-🧰 3. Gestão de Equipamentos
+---
 
-Lista de equipamentos utilizados
+### 🏺 Listagem Pública de Artefatos
+Página aberta onde o público pode visualizar artefatos já catalogados com:
+- Imagens do achado.
+- Descrição técnica.
+- Localização aproximada (protegida por *privacy layer*).
+- Status da pesquisa.
+- Possibilidade futura de filtros por período histórico.
 
-Estado (disponível, uso, manutenção)
+---
 
-Responsável atual
+## 🧭 Metodologia – SCRUM
 
-Histórico (em desenvolvimento)
+**Papéis**
 
-🔐 4. Sistema de Login e Permissões
+- **Product Owner:** André Siqueira  
+- **Scrum Master:** Guilherme Marques  
+- **Equipe de Desenvolvimento:** Miguel Boa Viagem, Bruno Ferreira, José Clayton, João Gabriel Coutinho, Rafael
 
-Login com autenticação (JWT / OAuth 2.0)
+**Planejamento & Organização**
 
-Permissões:
-
-Arqueólogos → acesso total
-
-Público → apenas leitura
-
-Sessões seguras com expiração
-
-🏺 5. Listagem Pública de Artefatos
-
-Acesso aberto com:
-
-Imagens reais
-
-Descrição técnica
-
-Localização protegida
-
-Status da pesquisa
-
-Futuro: filtros por período histórico
-
-🧭 Metodologia – SCRUM
-👥 Papéis
-
-Product Owner: André Siqueira
-
-Scrum Master: Guilherme Marques
-
-Dev Team: Miguel Boa Viagem, Bruno Ferreira, José Clayton, João Gabriel Coutinho, Rafael
-
-🗂️ Organização
-
-Trello:
+**Trello do projeto:**  
 https://trello.com/invite/b/690c84ee5613cbbddf11c46a/ATTI05d4c6dd2e427e012300288210981de2B7EA257A/como-ajudar-os-arqueologos-no-dia-a-dia
 
-🧪 Status Atual
+---
 
-🚧 Em Desenvolvimento:
-Funcionalidades principais sendo integradas ao protótipo robótico e testadas em campo.
+## 🧪 Status Atual
 
-🔧 Instalação e Configuração do Ambiente
-📦 1. Pré-requisitos
+**🚧 Em Desenvolvimento**
 
-Git
+As funcionalidades principais estão sendo implementadas e testadas junto ao protótipo do robô de escaneamento. O objetivo é validar o mapeamento em campo e o fluxo de marcação dos artefatos.
 
-Node.js 18+
+---
 
-NPM ou Yarn
+## 🔧 Instalação e Configuração do Ambiente
 
-Navegador moderno
+### 📦 Pré-requisitos
+- Git  
+- Node.js (v18+)  
+- NPM ou Yarn  
+- Navegador moderno (Chrome, Edge, Firefox)
 
-📥 2. Clonando o repositório
+### 📥 Clonando o repositório
+
+```bash
 git clone https://github.com/<seu-usuario>/<seu-repositorio>.git
 cd <seu-repositorio>
-
-⚙️ 3. Instalando dependências
-
+⚙️ Instalando dependências
 Com NPM:
 
+bash
+Copiar código
 npm install
-
-
 Ou com Yarn:
 
+bash
+Copiar código
 yarn
-
-▶️ 4. Rodando o projeto
-
+▶️ Rodando o projeto
 Via Live Server (VS Code)
-Clique direito no index.html → Open with Live Server
+Clique com o botão direito no index.html → Open with Live Server
 
 Via terminal:
 
+bash
+Copiar código
 npx http-server .
+Abra no navegador:
 
-
-O sistema abrirá em:
-
+arduino
+Copiar código
 http://localhost:8080
-
 🤝 Como Contribuir
-1. Criar branch
+Crie uma branch:
+
+bash
+Copiar código
 git checkout -b feature/nome-da-feature
-
-2. Commits claros
-
-Exemplos:
+Faça commits claros, por exemplo:
 
 feat: adiciona sistema de marcadores
 
@@ -147,17 +133,20 @@ fix: corrige erro no login
 
 refactor: reorganiza estrutura de arquivos
 
-3. Enviar alterações
+Envie suas alterações:
+
+bash
+Copiar código
 git push origin feature/nome-da-feature
+Abra um Pull Request descrevendo:
 
+O que foi feito.
 
-Depois, abra um Pull Request descrevendo:
-
-O que foi feito
-
-Como testar
+Como testar.
 
 📁 Estrutura do Projeto
+text
+Copiar código
 /archeomap
 │── index.html
 │── screens/
@@ -168,15 +157,19 @@ Como testar
 │── css/
 │── js/
 └── assets/
-
 📸 Screenshots do projeto
 Tela inicial
-<img width="289" height="446" src="https://github.com/user-attachments/assets/93387da5-354a-4285-afc5-8abca95eee78" />
+
+<img width="289" height="446" alt="Tela inicial" src="https://github.com/user-attachments/assets/93387da5-354a-4285-afc5-8abca95eee78" />
 Tela de cadastro
-<img width="244" height="442" src="https://github.com/user-attachments/assets/593da9d9-050e-4fa2-a2f5-b22eed07ac54" />
+
+<img width="244" height="442" alt="Tela de cadastro" src="https://github.com/user-attachments/assets/593da9d9-050e-4fa2-a2f5-b22eed07ac54" />
 Home Page
-<img width="284" height="449" src="https://github.com/user-attachments/assets/b0fb6a0f-4437-494d-a093-0cb0c1ffe61c" />
+
+<img width="284" height="449" alt="Home Page" src="https://github.com/user-attachments/assets/b0fb6a0f-4437-494d-a093-0cb0c1ffe61c" />
 Tela do mapa e suas informações
-<img width="246" height="446" src="https://github.com/user-attachments/assets/9d15ee2e-9b3a-4237-9af2-9e53fd85461a" />
+
+<img width="246" height="446" alt="Mapa e informações" src="https://github.com/user-attachments/assets/9d15ee2e-9b3a-4237-9af2-9e53fd85461a" />
 Tela das funcionalidades
-<img width="954" height="449" src="https://github.com/user-attachments/assets/8bec896d-39b6-4886-8c5a-fe3c65336293" />
+
+<img width="954" height="449" alt="Funcionalidades do mapa" src="https://github.com/user-attachments/assets/8bec896d-39b6-4886-8c5a-fe3c65336293" />
